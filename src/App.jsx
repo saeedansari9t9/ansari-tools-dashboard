@@ -3,9 +3,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
-import Tools from "./pages/Tools";
-import AddTool from "./pages/AddTool";
-import Users from "./pages/Users";
 
 import Sidebar from "./components/Sidebar";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -39,40 +36,6 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
-        <Route
-          path="/tools"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Tools />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/add-tool"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <AddTool />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/users"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Users />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-
       </Routes>
     </BrowserRouter>
   );
