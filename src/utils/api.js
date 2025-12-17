@@ -44,11 +44,5 @@ API.interceptors.request.use(
 // ================= AUTH =================
 export const signupUser = (data) => API.post("/auth/signup", data);
 export const loginUser  = (data) => API.post("/auth/login", data);
-
-// ================= TOOLS =================
-export const getTools = () => API.get("/tools");
-export const addTool = (data) => API.post("/tools", data);
-export const deleteTool = (id) => API.delete(`/tools/${id}`);
-
-// ================= USERS =================
-export const getUsers = () => API.get("/users");
+export const getMe = () => API.get("/user/me");
+export const getMyTools = () => API.get("/user/my-tools");
