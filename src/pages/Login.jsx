@@ -40,15 +40,15 @@ export default function Login() {
         <div className="absolute top-1/3 -right-32 h-[520px] w-[520px] rounded-full bg-fuchsia-500/20 blur-3xl" />
         <div className="absolute bottom-26 left-1/3 h-[520px] w-[520px] rounded-full bg-indigo-500/20 blur-3xl" />
         {/* Subtle grid */}
-        <div className="absolute inset-0 opacity-[0.12] [background-image:linear-gradient(to_right,rgba(255,255,255,0.18)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.18)_1px,transparent_1px)] [background-size:48px_48px]" />
+        {/* <div className="absolute inset-0 opacity-[0.12] [background-image:linear-gradient(to_right,rgba(255,255,255,0.18)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.18)_1px,transparent_1px)] [background-size:48px_48px]" /> */}
       </div>
 
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-6 sm:py-10">
         {/* Single centered card */}
-        <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 sm:p-8 shadow-[0_25px_80px_-30px_rgba(168,85,247,0.45)]">
+        <div className="w-[92%] max-w-md rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 sm:p-8 shadow-[0_25px_80px_-30px_rgba(168,85,247,0.45)]">
           {/* Header */}
           <div className="flex flex-col items-center text-center mb-6">
-            <div className="h-16 w-16 rounded-2xl bg-black/20 border border-white/10 flex items-center justify-center p-2">
+            <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-black/20 border border-white/10 flex items-center justify-center p-2">
               <img
                 src={logo}
                 alt="Ansari Tools Logo"
@@ -70,7 +70,7 @@ export default function Login() {
               <div className="mt-2">
                 <input
                   className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 outline-none focus:border-purple-400/60 focus:ring-2 focus:ring-purple-500/25 placeholder:text-white/35"
-                  placeholder="e.g. saad123"
+                  placeholder="e.g. ansari123"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   autoComplete="username"
@@ -104,7 +104,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-2xl py-3 font-semibold bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_12px_40px_-18px_rgba(236,72,153,0.75)]"
+              className="w-full rounded-2xl py-2.5 sm:py-3 font-semibold bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_12px_40px_-18px_rgba(236,72,153,0.75)]"
             >
               {loading ? "Logging in..." : "Login"}
             </button>
