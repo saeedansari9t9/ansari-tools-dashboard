@@ -45,10 +45,10 @@ export default function Login() {
 
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-6 sm:py-10">
         {/* Single centered card */}
-        <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 sm:p-8 shadow-[0_25px_80px_-30px_rgba(168,85,247,0.45)]">
+        <div className="w-[92%] max-w-md rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 sm:p-8 shadow-[0_25px_80px_-30px_rgba(168,85,247,0.45)]">
           {/* Header */}
           <div className="flex flex-col items-center text-center mb-6">
-            <div className="h-16 w-16 rounded-2xl bg-black/20 border border-white/10 flex items-center justify-center p-2">
+            <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-black/20 border border-white/10 flex items-center justify-center p-2">
               <img
                 src={logo}
                 alt="Ansari Tools Logo"
@@ -104,7 +104,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-2xl py-3 font-semibold bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_12px_40px_-18px_rgba(236,72,153,0.75)]"
+              className="w-full rounded-2xl py-2.5 sm:py-3 font-semibold bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_12px_40px_-18px_rgba(236,72,153,0.75)]"
             >
               {loading ? "Logging in..." : "Login"}
             </button>
