@@ -1,7 +1,7 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { useState } from "react";
 import logo from "../assets/images/logo.png";
-import { adminLogout } from "../utils/api"; // ✅ optional (cookie clear)
+import { logoutAll } from "../utils/logout";
 
 const navLinkClass = ({ isActive }) =>
   `flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${
@@ -12,24 +12,11 @@ const navLinkClass = ({ isActive }) =>
 
 export default function Sidebar({ isOpen, onClose, role = "user" }) {
   const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
 
-  const handleLogout = async () => {
-    try {
-      // ✅ user token clear
-      localStorage.removeItem("token");
-
-      // ✅ if admin, also clear cookie on backend
-      if (role === "admin") {
-        await adminLogout();
-      }
-    } catch (e) {
-      // ignore
-    } finally {
-      navigate("/login");
-      onClose?.();
-    }
-  };
+const handleLogout = async () => {
+  await logoutAll();
+  window.location.href = "https://www.ansaritools.com/login";
+};
 
   const content = (
     <div className="w-72 h-full bg-[#070312] text-white border-r border-white/10 flex flex-col">
