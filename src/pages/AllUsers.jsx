@@ -7,16 +7,16 @@ export default function AllUsers() {
   const [q, setQ] = useState("");
   const [error, setError] = useState("");
 
+  // ✅ Your User model fields: name, username, role
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return users;
+
     return users.filter((u) => {
-      const name = `${u.firstName || ""} ${u.lastName || ""}`.toLowerCase();
-      return (
-        name.includes(s) ||
-        (u.email || "").toLowerCase().includes(s) ||
-        (u.phone || "").toLowerCase().includes(s)
-      );
+      const name = (u.name || "").toLowerCase();
+      const username = (u.username || "").toLowerCase();
+      const role = (u.role || "").toLowerCase();
+      return name.includes(s) || username.includes(s) || role.includes(s);
     });
   }, [users, q]);
 
@@ -24,9 +24,9 @@ export default function AllUsers() {
     setLoading(true);
     setError("");
     try {
-      const res = await getAllUsers(); // if your API returns {users:[]}, adjust below
+      const res = await getAllUsers();
       const list = res.data?.users ?? res.data ?? [];
-      setUsers(list);
+      setUsers(Array.isArray(list) ? list : []);
     } catch (e) {
       setError(e?.response?.data?.message || "Failed to load users");
     } finally {
@@ -42,7 +42,7 @@ export default function AllUsers() {
     if (!confirm("Delete this user?")) return;
     try {
       await deleteUser(id);
-      setUsers((prev) => prev.filter((u) => u._id !== id && u.id !== id));
+      setUsers((prev) => prev.filter((u) => (u._id || u.id) !== id));
     } catch (e) {
       alert(e?.response?.data?.message || "Delete failed");
     }
@@ -53,14 +53,16 @@ export default function AllUsers() {
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">All Users</h1>
-          <p className="text-sm text-slate-500">Manage users, search and remove accounts.</p>
+          <p className="text-sm text-slate-500">
+            Manage users, search and remove accounts.
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search by name/email/phone…"
+            placeholder="Search by name/username/role…"
             className="h-10 w-72 max-w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-200"
           />
           <button
@@ -83,33 +85,38 @@ export default function AllUsers() {
               <thead className="bg-slate-50 text-slate-600">
                 <tr>
                   <th className="text-left px-4 py-3 font-medium">Name</th>
-                  <th className="text-left px-4 py-3 font-medium">Email</th>
-                  <th className="text-left px-4 py-3 font-medium">Phone</th>
-                  <th className="text-left px-4 py-3 font-medium">Status</th>
+                  <th className="text-left px-4 py-3 font-medium">Username</th>
+                  <th className="text-left px-4 py-3 font-medium">Role</th>
+                  <th className="text-left px-4 py-3 font-medium">Created</th>
                   <th className="text-right px-4 py-3 font-medium">Actions</th>
                 </tr>
               </thead>
+
               <tbody>
                 {filtered.map((u) => {
                   const id = u._id || u.id;
-                  const name =
-                    u.firstName || u.lastName
-                      ? `${u.firstName || ""} ${u.lastName || ""}`.trim()
-                      : "—";
+
+                  const name = u.name || "—";
+                  const username = u.username || "—";
+                  const role = u.role || "user";
+
+                  const created = u.createdAt
+                    ? new Date(u.createdAt).toLocaleDateString()
+                    : "—";
+
                   return (
                     <tr key={id} className="border-t border-slate-100">
                       <td className="px-4 py-3 text-slate-900">{name}</td>
-                      <td className="px-4 py-3 text-slate-700">{u.email || "—"}</td>
-                      <td className="px-4 py-3 text-slate-700">{u.phone || "—"}</td>
+                      <td className="px-4 py-3 text-slate-700">{username}</td>
                       <td className="px-4 py-3">
-                        <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2 py-1 text-xs">
-                          Active
+                        <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-700 px-2 py-1 text-xs">
+                          {role}
                         </span>
                       </td>
+                      <td className="px-4 py-3 text-slate-700">{created}</td>
+
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-2">
-                          {/* optional: edit */}
-                          {/* <button className="h-9 px-3 rounded-xl border border-slate-200 hover:bg-slate-50">Edit</button> */}
                           <button
                             onClick={() => onDelete(id)}
                             className="h-9 px-3 rounded-xl bg-red-600 text-white hover:bg-red-500"
@@ -121,9 +128,13 @@ export default function AllUsers() {
                     </tr>
                   );
                 })}
+
                 {filtered.length === 0 && (
                   <tr>
-                    <td className="px-4 py-8 text-center text-slate-500" colSpan={5}>
+                    <td
+                      className="px-4 py-8 text-center text-slate-500"
+                      colSpan={5}
+                    >
                       No users found.
                     </td>
                   </tr>
