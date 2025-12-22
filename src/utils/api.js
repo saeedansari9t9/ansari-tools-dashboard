@@ -12,7 +12,7 @@ const inferBaseUrl = () => {
     if (isLocal) return "http://localhost:5000/api";
   }
 
-  return "https://ansari-tools-server.vercel.app/api";
+  return "https://api.ansaritools.com/api";
 };
 
 export const API = axios.create({
