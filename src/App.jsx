@@ -8,6 +8,9 @@ import DashboardLayout from "./pages/DashboardLayout";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import AssignTool from "./pages/AssignTool";
+import AllUsers from "./pages/AllUsers";
+import AllTools from "./pages/AllTools";
+import AdminOnly from "./components/AdminOnly";
 
 export default function App() {
   return (
@@ -44,6 +47,35 @@ export default function App() {
                   <Navigate to="/dashboard" replace />
                 )
               }
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute>
+              {(role) => (
+                <DashboardLayout role={role}>
+                  <AdminOnly role={role}>
+                    <AllUsers />
+                  </AdminOnly>
+                </DashboardLayout>
+              )}
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/tools"
+          element={
+            <ProtectedRoute>
+              {(role) => (
+                <DashboardLayout role={role}>
+                  <AdminOnly role={role}>
+                    <AllTools />
+                  </AdminOnly>
+                </DashboardLayout>
+              )}
             </ProtectedRoute>
           }
         />

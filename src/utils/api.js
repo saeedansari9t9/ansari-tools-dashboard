@@ -37,3 +37,14 @@ export const getMyTools = () => API.get("/user/my-tools");
 // ---------- ADMIN AUTH (SSO COOKIE) ----------
 export const adminMe = () => API.get("/admins/me");
 export const adminLogout = () => API.post("/admins/logout");
+
+// USERS
+export const getAllUsers = (params) => API.get("/admin/users", { params }); // ✅ adjust if needed
+export const deleteUser = (id) => API.delete(`/admin/users/${id}`);         // ✅ adjust if needed
+export const updateUser = (id, data) => API.put(`/admin/users/${id}`, data); // optional
+
+// TOOLS
+export const getAllTools = (params) => API.get("/admin/tools", { params }); // ✅ adjust if needed
+export const createTool = (data) => API.post("/admin/tools", data);         // ✅ adjust if needed
+export const updateTool = (id, data) => API.put(`/admin/tools/${id}`, data); // ✅ adjust if needed
+export const deleteTool = (id) => API.delete(`/admin/tools/${id}`);    
