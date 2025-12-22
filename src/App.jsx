@@ -23,9 +23,11 @@ export default function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashboardLayout>
-                <Dashboard />
-              </DashboardLayout>
+              {(role) => (
+                <DashboardLayout role={role}>
+                  <Dashboard role={role} />
+                </DashboardLayout>
+              )}
             </ProtectedRoute>
           }
         />
@@ -33,9 +35,15 @@ export default function App() {
           path="/admin/assign-tool"
           element={
             <ProtectedRoute>
-              <DashboardLayout>
-                <AssignTool />
-              </DashboardLayout>
+              {(role) =>
+                role === "admin" ? (
+                  <DashboardLayout role={role}>
+                    <AssignTool />
+                  </DashboardLayout>
+                ) : (
+                  <Navigate to="/dashboard" replace />
+                )
+              }
             </ProtectedRoute>
           }
         />

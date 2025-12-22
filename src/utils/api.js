@@ -1,11 +1,5 @@
 import axios from "axios";
 
-/**
- * Auto detect API base URL
- * - env (Vercel / Prod)
- * - localhost (dev)
- * - fallback (prod)
- */
 const inferBaseUrl = () => {
   const envUrl = import.meta.env.VITE_API_BASE_URL;
   if (envUrl) return envUrl;
@@ -21,28 +15,25 @@ const inferBaseUrl = () => {
   return "https://ansari-tools-server.vercel.app/api";
 };
 
-// 🔹 AXIOS INSTANCE
 export const API = axios.create({
   baseURL: inferBaseUrl(),
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
+  withCredentials: true, // ✅ for admin cookie
 });
 
-// 🔐 AUTO ATTACH JWT TOKEN
-API.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+// ✅ USER TOKEN attach (for user login)
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token"); // user token
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
 
-// ================= AUTH =================
+// ---------- USER AUTH ----------
 export const signupUser = (data) => API.post("/auth/signup", data);
-export const loginUser  = (data) => API.post("/auth/login", data);
+export const loginUser = (data) => API.post("/auth/login", data);
 export const getMe = () => API.get("/user/me");
 export const getMyTools = () => API.get("/user/my-tools");
+
+// ---------- ADMIN AUTH (SSO COOKIE) ----------
+export const adminMe = () => API.get("/admins/me");
+export const adminLogout = () => API.post("/admins/logout");

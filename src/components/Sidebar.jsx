@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import logo from "../assets/images/logo.png";
+import { adminLogout } from "../utils/api"; // ✅ optional (cookie clear)
 
 const navLinkClass = ({ isActive }) =>
   `flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${
@@ -9,14 +10,25 @@ const navLinkClass = ({ isActive }) =>
       : "text-white/70 hover:text-white hover:bg-white/10"
   }`;
 
-export default function Sidebar({ isOpen, onClose }) {
+export default function Sidebar({ isOpen, onClose, role = "user" }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
-    onClose?.();
+  const handleLogout = async () => {
+    try {
+      // ✅ user token clear
+      localStorage.removeItem("token");
+
+      // ✅ if admin, also clear cookie on backend
+      if (role === "admin") {
+        await adminLogout();
+      }
+    } catch (e) {
+      // ignore
+    } finally {
+      navigate("/login");
+      onClose?.();
+    }
   };
 
   const content = (
@@ -32,7 +44,9 @@ export default function Sidebar({ isOpen, onClose }) {
         </div>
         <div>
           <div className="font-semibold leading-tight">AnsariTools</div>
-          <div className="text-xs text-white/50">User Dashboard</div>
+          <div className="text-xs text-white/50">
+            {role === "admin" ? "Admin Dashboard" : "User Dashboard"}
+          </div>
         </div>
 
         {/* Mobile close */}
@@ -47,6 +61,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
       {/* Nav */}
       <nav className="px-4 mt-2 space-y-2">
+        {/* ✅ COMMON (User + Admin) */}
         <NavLink to="/dashboard" className={navLinkClass} onClick={onClose}>
           <span className="text-base">🏠</span>
           Dashboard
@@ -56,6 +71,34 @@ export default function Sidebar({ isOpen, onClose }) {
           <span className="text-base">🎥</span>
           Tutorials
         </NavLink>
+
+        {/* ✅ ADMIN ONLY */}
+        {role === "admin" && (
+          <>
+            <div className="pt-3 pb-1 px-2 text-xs uppercase tracking-wider text-white/40">
+              Admin
+            </div>
+
+            <NavLink to="/admin/users" className={navLinkClass} onClick={onClose}>
+              <span className="text-base">👥</span>
+              All Users
+            </NavLink>
+
+            <NavLink to="/admin/tools" className={navLinkClass} onClick={onClose}>
+              <span className="text-base">🧰</span>
+              All Tools
+            </NavLink>
+
+            <NavLink
+              to="/admin/assign-tool"
+              className={navLinkClass}
+              onClick={onClose}
+            >
+              <span className="text-base">🔗</span>
+              Assign Tools
+            </NavLink>
+          </>
+        )}
       </nav>
 
       <div className="flex-1" />

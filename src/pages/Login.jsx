@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { loginUser } from "../utils/api";
 import { useNavigate, Link } from "react-router-dom";
-
-// ✅ Logo path
 import logo from "../assets/images/logo.png";
 
 export default function Login() {

@@ -1,12 +1,17 @@
 import { useState } from "react";
 import Sidebar from "../components/Sidebar";
 
-export default function DashboardLayout({ children }) {
+export default function DashboardLayout({ children, role = "user" }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      <Sidebar isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+      {/* ✅ role pass */}
+      <Sidebar
+        role={role}
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+      />
 
       <div className="flex-1 min-w-0">
         {/* Mobile top bar */}
