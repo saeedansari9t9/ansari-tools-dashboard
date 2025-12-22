@@ -39,9 +39,9 @@ export const adminMe = () => API.get("/admins/me");
 export const adminLogout = () => API.post("/admins/logout");
 
 // USERS
-export const getAllUsers = (params) => API.get("/admin/users", { params }); // ✅ adjust if needed
-export const deleteUser = (id) => API.delete(`/admin/users/${id}`);         // ✅ adjust if needed
-export const updateUser = (id, data) => API.put(`/admin/users/${id}`, data); // optional
+export const getAllUsers = (params) => API.get("/user", { params }); // ✅ adjust if needed
+export const deleteUser = (id) => API.delete(`/user/${id}`);         // ✅ adjust if needed
+export const updateUser = (id, data) => API.put(`/user/${id}`, data); // optional
 
 // TOOLS
 export const getAllTools = (params) => API.get("/admin/tools", { params }); // ✅ adjust if needed
