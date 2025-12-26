@@ -21,6 +21,35 @@ export default function Dashboard() {
     })();
   }, []);
 
+  useEffect(() => {
+    const syncTokenToExtension = () => {
+      // Yeh check bohot safe hai – koi error nahi aayega
+      if (
+        typeof window !== "undefined" &&
+        window.chrome &&
+        window.chrome.storage &&
+        window.chrome.storage.local &&
+        typeof window.chrome.storage.local.set === "function"
+      ) {
+        const token = localStorage.getItem("token");
+        if (token) {
+          window.chrome.storage.local.set({ token }, () => {
+            console.log("AnsariTools: Token successfully synced to extension");
+          });
+        }
+      }
+    };
+
+    // Pehli baar page load par sync karo
+    syncTokenToExtension();
+
+    // Har 10 seconds mein check karo (agar user logout/login kare)
+    const interval = setInterval(syncTokenToExtension, 10000);
+
+    // Cleanup when component unmounts
+    return () => clearInterval(interval);
+  }, []);
+
   const filtered = useMemo(() => {
     return tools.filter((t) => t.name.toLowerCase().includes(q.toLowerCase()));
   }, [q, tools]);
