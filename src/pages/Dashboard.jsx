@@ -21,38 +21,38 @@ export default function Dashboard() {
     })();
   }, []);
 
-  useEffect(() => {
-    const syncTokenToExtension = () => {
-      // Yeh check bohot safe hai – koi error nahi aayega
-      if (
-        typeof window !== "undefined" &&
-        window.chrome &&
-        window.chrome.storage &&
-        window.chrome.storage.local &&
-        typeof window.chrome.storage.local.set === "function"
-      ) {
-        const token = localStorage.getItem("token");
-        if (token) {
-          window.chrome.storage.local.set({ token }, () => {
-            console.log("AnsariTools: Token successfully synced to extension");
-          });
-        }
-      }
-    };
-
-    // Pehli baar page load par sync karo
-    syncTokenToExtension();
-
-    // Har 10 seconds mein check karo (agar user logout/login kare)
-    const interval = setInterval(syncTokenToExtension, 10000);
-
-    // Cleanup when component unmounts
-    return () => clearInterval(interval);
-  }, []);
-
   const filtered = useMemo(() => {
     return tools.filter((t) => t.name.toLowerCase().includes(q.toLowerCase()));
   }, [q, tools]);
+
+  const handleAccessTool = (toolUrl, toolName) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please login first");
+      return;
+    }
+
+    const cleanToolName = toolName.toLowerCase().replace(/\s+/g, '');
+
+    const separator = toolUrl.includes('?') ? '&' : '?';
+    const finalUrl = `${toolUrl}${separator}ansari_token=${encodeURIComponent(token)}&tool=${cleanToolName}`;
+
+    window.open(finalUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const getToolSlug = (name) => {
+    const map = {
+      "canva": "canva",
+      "canva pro": "canva",
+      "chatgpt": "chatgpt",
+      "openai": "chatgpt",
+      "midjourney": "midjourney",
+      "adobe": "adobe",
+      "netflix": "netflix",
+      "spotify": "spotify"
+    };
+    return map[name.toLowerCase()] || name.toLowerCase().replace(/\s+/g, '');
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -110,10 +110,16 @@ export default function Dashboard() {
                     </div>
 
                     <a
-                      href={t.accessUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-4 block w-full text-center rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 font-semibold"
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleAccessTool(
+                          t.accessUrl,
+                          getToolSlug(t.name) ||
+                          t.name.toLowerCase().replace(/\s+/g, "")
+                        );
+                      }}
+                      className="mt-4 block w-full text-center rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 font-semibold cursor-pointer inline-block"
                     >
                       Access
                     </a>
