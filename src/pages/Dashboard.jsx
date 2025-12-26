@@ -21,13 +21,11 @@ export default function Dashboard() {
     })();
   }, []);
 
-    // FINAL SUPER SAFE TOKEN SYNC – NO ERROR EVER!
   useEffect(() => {
-    const syncToken = () => {
-      // Yeh check bilkul safe hai – optional chaining + typeof
+    const syncTokenToExtension = () => {
+      // Yeh check bohot safe hai – koi error nahi aayega
       if (
         typeof window !== "undefined" &&
-        typeof window.chrome !== "undefined" &&
         window.chrome &&
         window.chrome.storage &&
         window.chrome.storage.local &&
@@ -35,19 +33,20 @@ export default function Dashboard() {
       ) {
         const token = localStorage.getItem("token");
         if (token) {
-          window.chrome.storage.local.set({ token: token }, () => {
-            console.log("%cAnsariTools: Token synced to extension! ✅", "color: green; font-size: 16px; font-weight: bold;");
+          window.chrome.storage.local.set({ token }, () => {
+            console.log("AnsariTools: Token successfully synced to extension");
           });
         }
       }
     };
 
-    // Page load par ek baar sync
-    syncToken();
+    // Pehli baar page load par sync karo
+    syncTokenToExtension();
 
-    // Har 5 seconds mein check (user logout/login kare to bhi update ho)
-    const interval = setInterval(syncToken, 5000);
+    // Har 10 seconds mein check karo (agar user logout/login kare)
+    const interval = setInterval(syncTokenToExtension, 10000);
 
+    // Cleanup when component unmounts
     return () => clearInterval(interval);
   }, []);
 
