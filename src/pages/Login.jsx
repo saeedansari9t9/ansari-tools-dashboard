@@ -22,6 +22,7 @@ export default function Login() {
       setLoading(true);
       const res = await loginUser({ username, password });
       localStorage.setItem("token", res.data.token);
+      localStorage.setItem("role", res.data.user.role); //Temporary
       nav("/dashboard");
     } catch (err) {
       alert(err.response?.data?.message || "Invalid credentials");
