@@ -7,10 +7,11 @@ import DashboardLayout from "./pages/DashboardLayout";
 // import Tutorials from "./pages/Tutorials"; // agar file nahi bani to temporarily hata do
 
 import ProtectedRoute from "./components/ProtectedRoute";
-import AssignTool from "./pages/AssignTool";
 import AllUsers from "./pages/AllUsers";
 import AllTools from "./pages/AllTools";
 import AdminOnly from "./components/AdminOnly";
+import AssignToolsPage from "./pages/AssignToolsPage";
+import Tutorials from "./pages/Tutorials";
 
 export default function App() {
   return (
@@ -29,6 +30,18 @@ export default function App() {
               {(role) => (
                 <DashboardLayout role={role}>
                   <Dashboard role={role} />
+                </DashboardLayout>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tutorials"
+          element={
+            <ProtectedRoute>
+              {(role) => (
+                <DashboardLayout role={role}>
+                  <Tutorials role={role} />
                 </DashboardLayout>
               )}
             </ProtectedRoute>
@@ -76,6 +89,16 @@ export default function App() {
                   </AdminOnly>
                 </DashboardLayout>
               )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/assign-tools"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout role="admin">
+                <AssignToolsPage />
+              </DashboardLayout>
             </ProtectedRoute>
           }
         />
