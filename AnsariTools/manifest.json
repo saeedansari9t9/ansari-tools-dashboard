@@ -1,0 +1,111 @@
+{
+  "manifest_version": 3,
+  "name": "Ansari Tools",
+  "version": "1.0",
+  "description": "extension developed by saeed ansari",
+  "icons": {
+    "16": "logo.png",
+    "32": "logo.png",
+    "48": "logo.png",
+    "128": "logo.png"
+  },
+  "action": {
+    "default_icon": "logo.png"
+  },
+
+  "permissions": [
+    "storage",
+    "cookies",
+    "tabs",
+    "scripting"
+  ],
+
+  "host_permissions": [
+    "http://127.0.0.1:8000/*",
+    "http://localhost:8000/*",
+    "*://*.ngrok-free.app/*",
+    "*://*.localtunnel.me/*",
+    "*://*.pinggy.link/*",
+    "*://*.lhr.life/*",
+    "http://localhost:5173/*",
+    "http://localhost:3000/*",
+    "https://*.ansaritools.com/*",
+    "https://ansaritools.com/*",
+    "https://*.canva.com/*",
+    "https://canva.com/*",
+    "https://*.chatgpt.com/*",
+    "https://chatgpt.com/*",
+    "https://*.openai.com/*",
+    "https://openai.com/*"
+  ],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "content_scripts": [
+
+    {
+      "comment": "Clears local storage in the main world synchronously",
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://www.canva.com/*",
+        "https://canva.com/*"
+      ],
+      "js": ["clear_storage_main.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+
+    {
+      "comment": "Listens for postMessage from the dashboard",
+      "matches": [
+        "http://127.0.0.1:8000/*",
+        "http://localhost:8000/*",
+        "*://*.ngrok-free.app/*",
+        "*://*.localtunnel.me/*",
+        "*://*.pinggy.link/*",
+        "*://*.lhr.life/*",
+        "http://localhost:5173/*",
+        "http://localhost:3000/*",
+        "https://*.ansaritools.com/*",
+        "https://ansaritools.com/*"
+      ],
+      "js": ["dashboard_bridge.js"],
+      "run_at": "document_start"
+    },
+
+    {
+      "comment": "Auto-fills Canva login form",
+      "matches": [
+        "https://www.canva.com/*",
+        "https://canva.com/*"
+      ],
+      "js": ["canva_login.js"],
+      "run_at": "document_start"
+    },
+
+    {
+      "comment": "Auto-fills ChatGPT login form (email/password fallback)",
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://auth.openai.com/*"
+      ],
+      "js": ["chatgpt_login.js"],
+      "run_at": "document_start"
+    },
+
+    {
+      "comment": "Captures ChatGPT session cookies after manual login",
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*"
+      ],
+      "js": ["chatgpt_capture.js"],
+      "run_at": "document_idle"
+    }
+
+  ]
+}

@@ -10,7 +10,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AllUsers from "./pages/AllUsers";
 import AllTools from "./pages/AllTools";
 import AdminOnly from "./components/AdminOnly";
-import AssignToolsPage from "./pages/AssignToolsPage";
+import AssignTool from "./pages/AssignTool";
+import ManageCookies from "./pages/ManageCookies";
 import Tutorials from "./pages/Tutorials";
 
 export default function App() {
@@ -64,6 +65,22 @@ export default function App() {
           }
         />
         <Route
+          path="/admin/manage-cookies"
+          element={
+            <ProtectedRoute>
+              {(role) =>
+                role === "admin" ? (
+                  <DashboardLayout role={role}>
+                    <ManageCookies />
+                  </DashboardLayout>
+                ) : (
+                  <Navigate to="/dashboard" replace />
+                )
+              }
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin/users"
           element={
             <ProtectedRoute>
@@ -97,7 +114,7 @@ export default function App() {
           element={
             <ProtectedRoute>
               <DashboardLayout role="admin">
-                <AssignToolsPage />
+                <AssignTool />
               </DashboardLayout>
             </ProtectedRoute>
           }

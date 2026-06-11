@@ -1,19 +1,34 @@
 import { useEffect, useState } from "react";
-import { API } from "../utils/api"; // axios instance (token auto attach)
+import { API, getAllUsers } from "../utils/api"; // axios instance and helper
 
 export default function AssignTool() {
   const [username, setUsername] = useState("");
   const [toolSlug, setToolSlug] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
   const [tools, setTools] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const res = await API.get("/admin/tools");
-      setTools(res.data.tools || []);
-      if ((res.data.tools || []).length > 0) {
-        setToolSlug(res.data.tools[0].slug);
+      // Fetch tools
+      try {
+        const res = await API.get("/admin/tools");
+        setTools(res.data.tools || []);
+        if ((res.data.tools || []).length > 0) {
+          setToolSlug(res.data.tools[0].slug);
+        }
+      } catch (err) {
+        console.error("Error loading tools:", err);
+      }
+
+      // Fetch users
+      try {
+        const resUsers = await getAllUsers();
+        const list = resUsers.data?.users ?? resUsers.data ?? [];
+        setUsers(Array.isArray(list) ? list : []);
+      } catch (err) {
+        console.error("Error loading users:", err);
       }
     })();
   }, []);
@@ -50,11 +65,19 @@ export default function AssignTool() {
           <div>
             <label className="text-sm text-slate-600">Username</label>
             <input
+              list="user-suggestions"
               className="mt-1 w-full border border-slate-200 rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-200"
               placeholder="e.g. ansari123"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
+            <datalist id="user-suggestions">
+              {users.map((u) => (
+                <option key={u._id || u.id} value={u.username}>
+                  {u.name ? `${u.name} (@${u.username})` : u.username}
+                </option>
+              ))}
+            </datalist>
           </div>
 
           <div>

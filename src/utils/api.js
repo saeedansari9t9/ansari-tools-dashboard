@@ -47,4 +47,5 @@ export const updateUser = (id, data) => API.put(`/user/${id}`, data); // optiona
 export const getAllTools = (params) => API.get("/admin/tools", { params }); // ✅ adjust if needed
 export const createTool = (data) => API.post("/admin/tools", data);         // ✅ adjust if needed
 export const updateTool = (id, data) => API.put(`/admin/tools/${id}`, data); // ✅ adjust if needed
-export const deleteTool = (id) => API.delete(`/admin/tools/${id}`);    
+export const deleteTool = (id) => API.delete(`/admin/tools/${id}`);
+export const getToolCookies = (slug) => API.get(`/user/tools/${slug}/cookies`);    

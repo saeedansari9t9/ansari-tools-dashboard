@@ -77,6 +77,15 @@ const handleLogout = async () => {
             </NavLink>
 
             <NavLink
+              to="/admin/manage-cookies"
+              className={navLinkClass}
+              onClick={onClose}
+            >
+              <span className="text-base">🍪</span>
+              Manage Cookies
+            </NavLink>
+
+            <NavLink
               to="/admin/assign-tool"
               className={navLinkClass}
               onClick={onClose}

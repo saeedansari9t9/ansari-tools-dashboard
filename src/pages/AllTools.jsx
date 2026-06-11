@@ -10,11 +10,16 @@ export default function AllTools() {
   // create form
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
+  const [slug, setSlug] = useState("");
+  const [accessUrl, setAccessUrl] = useState("");
+  const [image, setImage] = useState("");
 
   // edit state
   const [editing, setEditing] = useState(null); // tool object
   const [editName, setEditName] = useState("");
   const [editDesc, setEditDesc] = useState("");
+  const [editAccessUrl, setEditAccessUrl] = useState("");
+  const [editImage, setEditImage] = useState("");
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -49,11 +54,20 @@ export default function AllTools() {
     e.preventDefault();
     if (!name.trim()) return alert("Tool name required");
     try {
-      const res = await createTool({ name: name.trim(), description: desc.trim() });
+      const res = await createTool({
+        name: name.trim(),
+        description: desc.trim(),
+        slug: slug.trim() || undefined,
+        accessUrl: accessUrl.trim(),
+        image: image.trim(),
+      });
       const newTool = res.data?.tool ?? res.data;
       setTools((prev) => [newTool, ...prev]);
       setName("");
       setDesc("");
+      setSlug("");
+      setAccessUrl("");
+      setImage("");
     } catch (e2) {
       alert(e2?.response?.data?.message || "Create failed");
     }
@@ -73,13 +87,20 @@ export default function AllTools() {
     setEditing(tool);
     setEditName(tool.name || "");
     setEditDesc(tool.description || "");
+    setEditAccessUrl(tool.accessUrl || "");
+    setEditImage(tool.image || "");
   };
 
   const saveEdit = async () => {
     if (!editing) return;
     const id = editing._id || editing.id;
     try {
-      const res = await updateTool(id, { name: editName.trim(), description: editDesc.trim() });
+      const res = await updateTool(id, {
+        name: editName.trim(),
+        description: editDesc.trim(),
+        accessUrl: editAccessUrl.trim(),
+        image: editImage.trim(),
+      });
       const updated = res.data?.tool ?? res.data?.updatedTool ?? res.data;
       setTools((prev) => prev.map((t) => ((t._id || t.id) === id ? updated : t)));
       setEditing(null);
@@ -113,20 +134,56 @@ export default function AllTools() {
       </div>
 
       {/* Create */}
-      <form onSubmit={onCreate} className="mt-5 grid md:grid-cols-3 gap-3">
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Tool name"
-          className="h-11 rounded-xl border border-slate-200 px-3 text-sm"
-        />
-        <input
-          value={desc}
-          onChange={(e) => setDesc(e.target.value)}
-          placeholder="Short description (optional)"
-          className="h-11 rounded-xl border border-slate-200 px-3 text-sm"
-        />
-        <button className="h-11 rounded-xl bg-emerald-600 text-white text-sm hover:bg-emerald-500">
+      <form onSubmit={onCreate} className="mt-5 bg-white border border-slate-200 rounded-2xl p-5 space-y-4 max-w-2xl">
+        <h2 className="text-base font-semibold text-slate-900">Add New Tool</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs text-slate-500 font-medium">Tool Name *</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. ChatGPT"
+              className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-200"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-slate-500 font-medium">Slug (Optional, auto-generated)</label>
+            <input
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+              placeholder="e.g. chatgpt"
+              className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-200"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-slate-500 font-medium">Access URL</label>
+            <input
+              value={accessUrl}
+              onChange={(e) => setAccessUrl(e.target.value)}
+              placeholder="e.g. https://chatgpt.com/"
+              className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-200"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-slate-500 font-medium">Image URL</label>
+            <input
+              value={image}
+              onChange={(e) => setImage(e.target.value)}
+              placeholder="e.g. https://example.com/logo.png"
+              className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-200"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="text-xs text-slate-500 font-medium">Short Description</label>
+            <input
+              value={desc}
+              onChange={(e) => setDesc(e.target.value)}
+              placeholder="e.g. Shared access to ChatGPT Plus"
+              className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-200"
+            />
+          </div>
+        </div>
+        <button className="h-11 w-full rounded-xl bg-emerald-600 text-white text-sm hover:bg-emerald-500 font-semibold">
           Add Tool
         </button>
       </form>
@@ -187,37 +244,61 @@ export default function AllTools() {
 
       {/* Edit Modal */}
       {editing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-5 border border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-5 border border-slate-200 my-8">
             <div className="flex items-start justify-between">
               <div>
                 <div className="text-lg font-semibold text-slate-900">Edit Tool</div>
-                <div className="text-sm text-slate-500">Update tool info</div>
+                <div className="text-sm text-slate-500">Update tool info & session cookies</div>
               </div>
               <button
                 onClick={() => setEditing(null)}
-                className="h-9 px-3 rounded-xl border border-slate-200 hover:bg-slate-50"
+                className="h-9 px-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-sm"
               >
                 Close
               </button>
             </div>
 
-            <div className="mt-4 space-y-3">
-              <input
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"
-                placeholder="Tool name"
-              />
-              <textarea
-                value={editDesc}
-                onChange={(e) => setEditDesc(e.target.value)}
-                className="min-h-[110px] w-full rounded-xl border border-slate-200 p-3 text-sm"
-                placeholder="Tool description"
-              />
+            <div className="mt-4 space-y-4">
+              <div>
+                <label className="text-xs text-slate-500 font-medium">Tool Name</label>
+                <input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"
+                  placeholder="Tool name"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500 font-medium">Access URL</label>
+                <input
+                  value={editAccessUrl}
+                  onChange={(e) => setEditAccessUrl(e.target.value)}
+                  className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"
+                  placeholder="Access URL"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500 font-medium">Image URL</label>
+                <input
+                  value={editImage}
+                  onChange={(e) => setEditImage(e.target.value)}
+                  className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"
+                  placeholder="Image URL"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500 font-medium">Description</label>
+                <textarea
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  className="mt-1 min-h-[80px] w-full rounded-xl border border-slate-200 p-3 text-sm"
+                  placeholder="Tool description"
+                />
+              </div>
               <button
                 onClick={saveEdit}
-                className="h-11 w-full rounded-xl bg-slate-900 text-white text-sm hover:bg-slate-800"
+                className="h-11 w-full rounded-xl bg-slate-900 text-white text-sm hover:bg-slate-800 font-semibold"
               >
                 Save Changes
               </button>

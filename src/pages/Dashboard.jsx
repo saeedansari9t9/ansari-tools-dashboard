@@ -1,11 +1,44 @@
 import { useEffect, useMemo, useState } from "react";
-import { getMe, getMyTools } from "../utils/api";
+import { getMe, getMyTools, getToolCookies } from "../utils/api";
 
 export default function Dashboard() {
   const [q, setQ] = useState("");
   const [me, setMe] = useState(null);
   const [tools, setTools] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isExtensionInstalled, setIsExtensionInstalled] = useState(false);
+
+  useEffect(() => {
+    // 1. Initial immediate check
+    if (document.documentElement.dataset.ansariExtensionInstalled === "true") {
+      setIsExtensionInstalled(true);
+    }
+
+    // 2. Listen for the window postMessage from content script
+    const handleMessage = (event) => {
+      if (event.data && (event.data.type === "ANSARI_EXTENSION_INSTALLED" || event.data.type === "AI_TOOL_BRIDGE_READY")) {
+        setIsExtensionInstalled(true);
+      }
+    };
+    window.addEventListener("message", handleMessage);
+
+    // 3. Send a ping to the bridge in case it is already loaded and waiting
+    window.postMessage({ type: "PING_AI_TOOL_BRIDGE" }, "*");
+
+    // 4. Fallback check after 1.2s to ensure the content script executed
+    const timer = setTimeout(() => {
+      if (document.documentElement.dataset.ansariExtensionInstalled === "true") {
+        setIsExtensionInstalled(true);
+      } else {
+        window.postMessage({ type: "PING_AI_TOOL_BRIDGE" }, "*");
+      }
+    }, 1200);
+
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      clearTimeout(timer);
+    };
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -25,19 +58,36 @@ export default function Dashboard() {
     return tools.filter((t) => t.name.toLowerCase().includes(q.toLowerCase()));
   }, [q, tools]);
 
-  const handleAccessTool = (toolUrl, toolName) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Please login first");
-      return;
+  const handleAccessTool = async (toolUrl, toolName) => {
+    try {
+      const cleanToolName = toolName.toLowerCase().replace(/\s+/g, '');
+      
+      console.log(`[Dashboard] Requesting cookies for tool: ${cleanToolName}`);
+      const res = await getToolCookies(cleanToolName);
+      const cookiesList = res.data?.cookies || [];
+
+      if (cookiesList.length === 0) {
+        alert("⚠️ No active session cookies found for this tool in the database. Please ask the Admin to update them on the 'Manage Cookies' page!");
+        return;
+      }
+
+      // Send postMessage to the old chrome-extension bridge
+      window.postMessage(
+        {
+          type: "AI_TOOL_ACCESS",
+          tool: cleanToolName,
+          email: "shared-user@ansaritools.com",
+          password: "password123",
+          url: toolUrl,
+          cookies: cookiesList,
+        },
+        "*"
+      );
+      
+    } catch (err) {
+      console.error("Failed to access tool:", err);
+      alert(err.response?.data?.message || "Failed to fetch session. Please verify server connection.");
     }
-
-    const cleanToolName = toolName.toLowerCase().replace(/\s+/g, '');
-
-    const separator = toolUrl.includes('?') ? '&' : '?';
-    const finalUrl = `${toolUrl}${separator}ansari_token=${encodeURIComponent(token)}&tool=${cleanToolName}`;
-
-    window.open(finalUrl, '_blank', 'noopener,noreferrer');
   };
 
   const getToolSlug = (name) => {
@@ -109,20 +159,31 @@ export default function Dashboard() {
                       Expires {new Date(t.expiresAt).toLocaleDateString()}
                     </div>
 
-                    <a
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleAccessTool(
-                          t.accessUrl,
-                          getToolSlug(t.name) ||
-                          t.name.toLowerCase().replace(/\s+/g, "")
-                        );
-                      }}
-                      className="mt-4 block w-full text-center rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 font-semibold cursor-pointer inline-block"
-                    >
-                      Access
-                    </a>
+                    {isExtensionInstalled ? (
+                      <button
+                        onClick={() => {
+                          handleAccessTool(
+                            t.accessUrl,
+                            getToolSlug(t.name) ||
+                            t.name.toLowerCase().replace(/\s+/g, "")
+                          );
+                        }}
+                        className="mt-4 block w-full text-center rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 font-semibold cursor-pointer"
+                      >
+                        Access
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          alert(
+                            "⚠️ Chrome Extension is not installed or enabled!\n\nPlease follow these steps to install:\n1. Open chrome://extensions/ in Google Chrome.\n2. Enable 'Developer mode' in the top-right.\n3. Click 'Load unpacked' in the top-left.\n4. Select the directory: C:\\Users\\WEB\\Desktop\\Latu\\ansari-tools-dashboard\\AnsariTools\n5. Once installed, reload this page to access your tools!"
+                          );
+                        }}
+                        className="mt-4 block w-full text-center rounded-xl bg-amber-500 hover:bg-amber-600 text-white py-2.5 font-semibold cursor-pointer"
+                      >
+                        Install Extension
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
