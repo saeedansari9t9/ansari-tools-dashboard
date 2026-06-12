@@ -28,6 +28,21 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
+// ✅ Handle 401 Unauthorized globally (e.g. session expired on password reset)
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      if (!window.location.pathname.startsWith("/login")) {
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // ---------- USER AUTH ----------
 export const signupUser = (data) => API.post("/auth/signup", data);
 export const loginUser = (data) => API.post("/auth/login", data);
@@ -41,11 +56,16 @@ export const adminLogout = () => API.post("/admins/logout");
 // USERS
 export const getAllUsers = (params) => API.get("/user", { params }); // ✅ adjust if needed
 export const deleteUser = (id) => API.delete(`/user/${id}`);         // ✅ adjust if needed
+export const createUser = (data) => API.post("/user", data);
 export const updateUser = (id, data) => API.put(`/user/${id}`, data); // optional
+export const resetUserPassword = (id, data) => API.post(`/user/${id}/reset-password`, data);
 
 // TOOLS
 export const getAllTools = (params) => API.get("/admin/tools", { params }); // ✅ adjust if needed
 export const createTool = (data) => API.post("/admin/tools", data);         // ✅ adjust if needed
 export const updateTool = (id, data) => API.put(`/admin/tools/${id}`, data); // ✅ adjust if needed
 export const deleteTool = (id) => API.delete(`/admin/tools/${id}`);
-export const getToolCookies = (slug) => API.get(`/user/tools/${slug}/cookies`);    
+export const getToolCookies = (slug) => API.get(`/user/tools/${slug}/cookies`);
+export const getUsersWithTools = () => API.get("/admin/users-with-tools");
+export const getTutorial = () => API.get("/user/tutorial");
+export const updateTutorial = (data) => API.put("/user/tutorial", data);    

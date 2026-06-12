@@ -126,7 +126,7 @@ export default function AllTools() {
           />
           <button
             onClick={load}
-            className="h-10 rounded-xl bg-slate-900 text-white px-4 text-sm hover:bg-slate-800"
+            className="h-10 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 px-4 text-sm hover:bg-slate-200 transition-colors cursor-pointer"
           >
             Refresh
           </button>
@@ -183,7 +183,7 @@ export default function AllTools() {
             />
           </div>
         </div>
-        <button className="h-11 w-full rounded-xl bg-emerald-600 text-white text-sm hover:bg-emerald-500 font-semibold">
+        <button className="h-11 w-full rounded-xl bg-indigo-600 text-white text-sm hover:bg-indigo-700 font-semibold shadow-md shadow-indigo-600/10 active:scale-[0.99] transition cursor-pointer">
           Add Tool
         </button>
       </form>
@@ -195,32 +195,36 @@ export default function AllTools() {
           <div className="p-6 text-sm text-red-600">{error}</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-[900px] w-full text-sm">
-              <thead className="bg-slate-50 text-slate-600">
-                <tr>
-                  <th className="text-left px-4 py-3 font-medium">Name</th>
-                  <th className="text-left px-4 py-3 font-medium">Description</th>
-                  <th className="text-right px-4 py-3 font-medium">Actions</th>
+            <table className="min-w-[900px] w-full text-sm border-collapse">
+              <thead>
+                <tr className="border-b border-slate-100 text-slate-400 text-[11px] uppercase tracking-wider font-bold">
+                  <th className="text-left px-6 py-4.5 font-bold">Name</th>
+                  <th className="text-left px-6 py-4.5 font-bold">Description</th>
+                  <th className="text-right px-6 py-4.5 font-bold">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((t) => {
                   const id = t._id || t.id;
                   return (
-                    <tr key={id} className="border-t border-slate-100">
-                      <td className="px-4 py-3 text-slate-900">{t.name || "—"}</td>
-                      <td className="px-4 py-3 text-slate-700">{t.description || "—"}</td>
-                      <td className="px-4 py-3">
+                    <tr key={id} className="border-b border-slate-100 hover:bg-slate-50/40 transition-colors">
+                      <td className="px-6 py-4 font-semibold text-slate-900 text-[14px]">
+                        {t.name || "—"}
+                      </td>
+                      <td className="px-6 py-4 text-slate-600 text-[13px] font-medium max-w-sm truncate" title={t.description}>
+                        {t.description || "—"}
+                      </td>
+                      <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={() => openEdit(t)}
-                            className="h-9 px-3 rounded-xl border border-slate-200 hover:bg-slate-50"
+                            className="h-8 px-4 rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100/80 border border-slate-200/50 font-semibold text-xs transition active:scale-95 cursor-pointer"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => onDelete(id)}
-                            className="h-9 px-3 rounded-xl bg-red-600 text-white hover:bg-red-500"
+                            className="h-8 px-4 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100/70 font-semibold text-xs transition active:scale-95 cursor-pointer"
                           >
                             Delete
                           </button>
@@ -231,7 +235,7 @@ export default function AllTools() {
                 })}
                 {filtered.length === 0 && (
                   <tr>
-                    <td className="px-4 py-8 text-center text-slate-500" colSpan={3}>
+                    <td className="px-6 py-8 text-center text-slate-500 font-medium" colSpan={3}>
                       No tools found.
                     </td>
                   </tr>
@@ -298,7 +302,7 @@ export default function AllTools() {
               </div>
               <button
                 onClick={saveEdit}
-                className="h-11 w-full rounded-xl bg-slate-900 text-white text-sm hover:bg-slate-800 font-semibold"
+                className="h-11 w-full rounded-xl bg-indigo-600 text-white text-sm hover:bg-indigo-700 font-semibold shadow-md shadow-indigo-600/10 active:scale-[0.99] transition cursor-pointer"
               >
                 Save Changes
               </button>

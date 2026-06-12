@@ -1,1 +1,29 @@
 @import "tailwindcss";
+
+@theme {
+  --color-indigo-50: #f0ebff;
+  --color-indigo-100: #e1d4ff;
+  --color-indigo-200: #c3a8ff;
+  --color-indigo-500: #6c3ce6;
+  --color-indigo-600: #5529b3;
+  --color-indigo-700: #441e94;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

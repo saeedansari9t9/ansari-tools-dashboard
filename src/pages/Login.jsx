@@ -32,44 +32,40 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-[#070312] text-white">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-tr from-slate-50 via-white to-indigo-50/50 text-slate-800 flex items-center justify-center px-4 py-8 select-none">
       {/* Background gradients */}
-      <div className="absolute inset-0">
-        <div className="absolute -top-32 -left-32 h-[420px] w-[420px] rounded-full bg-purple-700/30 blur-3xl" />
-        <div className="absolute top-1/3 -right-32 h-[520px] w-[520px] rounded-full bg-fuchsia-500/20 blur-3xl" />
-        <div className="absolute bottom-26 left-1/3 h-[520px] w-[520px] rounded-full bg-indigo-500/20 blur-3xl" />
-        {/* Subtle grid */}
-        {/* <div className="absolute inset-0 opacity-[0.12] [background-image:linear-gradient(to_right,rgba(255,255,255,0.18)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.18)_1px,transparent_1px)] [background-size:48px_48px]" /> */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-40 -left-40 h-[600px] w-[600px] rounded-full bg-indigo-100/40 blur-3xl opacity-70 animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute -bottom-40 -right-40 h-[600px] w-[600px] rounded-full bg-sky-100/40 blur-3xl opacity-70 animate-pulse" style={{ animationDuration: '10s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[800px] w-[800px] rounded-full bg-violet-50/20 blur-3xl pointer-events-none" />
       </div>
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-6 sm:py-10">
+      <div className="relative z-10 w-[100%] max-w-md transform transition-all duration-500 ease-out hover:scale-[1.01] animate-fade-in-up">
         {/* Single centered card */}
-        <div className="w-[92%] max-w-md rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 sm:p-8 shadow-[0_25px_80px_-30px_rgba(168,85,247,0.45)]">
+        <div className="rounded-3xl border border-slate-200/60 bg-white/80 backdrop-blur-xl p-6 sm:p-10 shadow-[0_20px_50px_rgba(15,23,42,0.06)] hover:shadow-[0_24px_60px_rgba(15,23,42,0.1)] transition-all duration-300">
           {/* Header */}
-          <div className="flex flex-col items-center text-center mb-6">
-            <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-black/20 border border-white/10 flex items-center justify-center p-2">
-              <img
-                src={logo}
-                alt="Ansari Tools Logo"
-                className="h-full w-full object-contain"
-              />
-            </div>
+          <div className="flex flex-col items-center text-center mb-8">
+            <img
+              src={logo}
+              alt="Ansari Tools Logo"
+              className="h-16 w-16 object-contain hover:rotate-3 transition-transform duration-300"
+            />
 
-            <h1 className="mt-4 text-2xl font-semibold tracking-tight">
+            <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-900">
               Ansari Tools
             </h1>
-            <p className="text-white/70 text-sm mt-1">Dashboard Login</p>
+            <p className="text-slate-500 text-sm mt-1.5 font-medium">Dashboard Login</p>
           </div>
 
           {/* Form */}
-          <form onSubmit={submit} className="space-y-4">
+          <form onSubmit={submit} className="space-y-5">
             {/* Username */}
-            <div>
-              <label className="text-sm text-white/70">Username</label>
-              <div className="mt-2">
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Username</label>
+              <div className="relative">
                 <input
-                  className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 outline-none focus:border-purple-400/60 focus:ring-2 focus:ring-purple-500/25 placeholder:text-white/35"
-                  placeholder="e.g. ansari123"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 outline-none transition-all duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:bg-white placeholder:text-slate-400 text-sm"
+                  placeholder="Enter your username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   autoComplete="username"
@@ -78,12 +74,12 @@ export default function Login() {
             </div>
 
             {/* Password */}
-            <div>
-              <label className="text-sm text-white/70">Password</label>
-              <div className="mt-2 relative">
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Password</label>
+              <div className="relative">
                 <input
                   type={showPass ? "text" : "password"}
-                  className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 pr-24 outline-none focus:border-purple-400/60 focus:ring-2 focus:ring-purple-500/25 placeholder:text-white/35"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 pr-20 text-slate-900 outline-none transition-all duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:bg-white placeholder:text-slate-400 text-sm"
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -91,8 +87,12 @@ export default function Login() {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPass((s) => !s)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2 text-xs border border-white/10 bg-white/5 hover:bg-white/10 text-white/80"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowPass((s) => !s);
+                  }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-xl px-3 py-1.5 text-xs font-medium border border-slate-200/80 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-600 transition-all active:scale-95 cursor-pointer"
                 >
                   {showPass ? "Hide" : "Show"}
                 </button>
@@ -103,27 +103,42 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-2xl py-2.5 sm:py-3 font-semibold bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_12px_40px_-18px_rgba(236,72,153,0.75)]"
+              className="w-full rounded-2xl py-3.5 font-semibold bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed text-white shadow-lg shadow-indigo-600/10 transition-all duration-200 flex items-center justify-center gap-2 mt-2 cursor-pointer"
             >
-              {loading ? "Logging in..." : "Login"}
+              {loading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  <span>Logging in...</span>
+                </>
+              ) : (
+                "Login to Dashboard"
+              )}
             </button>
 
             {/* Signup + secure note */}
             <div className="flex items-center justify-between pt-2">
-              <p className="text-xs text-white/60">
+              <p className="text-xs text-slate-500">
                 Don&apos;t have an account?{" "}
                 <Link
                   to="/signup"
-                  className="text-purple-300 hover:text-purple-200 font-semibold"
+                  className="text-indigo-600 hover:text-indigo-500 font-semibold transition-colors"
                 >
                   Sign up
                 </Link>
               </p>
-              <span className="text-xs text-white/45">🔒 Secure</span>
+              <span className="text-xs text-slate-400 flex items-center gap-1 font-medium">
+                <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Secure Connection
+              </span>
             </div>
           </form>
 
-          <div className="mt-8 border-t border-white/10 pt-6 text-xs text-white/50 text-center">
+          <div className="mt-8 border-t border-slate-100 pt-6 text-xs text-slate-400 text-center font-medium">
             By continuing, you agree to our terms and privacy policy.
           </div>
         </div>

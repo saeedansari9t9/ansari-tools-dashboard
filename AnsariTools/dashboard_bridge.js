@@ -274,8 +274,8 @@ window.addEventListener('message', async (event) => {
         chrome.runtime.sendMessage({
             type:     'INJECT_COOKIES_AND_OPEN',
             cookies:  cookies,
-            url:      'https://chatgpt.com',   // land here after injection
-            clearUrl: 'https://chatgpt.com',   // clear this domain first
+            url:      url,   // land here after injection
+            clearUrl: url,   // clear this domain first
         }, (response) => {
             console.log('[AI Tools Bridge] ✅ Cookie injection dispatched:', response);
         });

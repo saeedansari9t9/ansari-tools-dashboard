@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Ansari Tools",
   "version": "1.0",
-  "description": "extension developed by saeed ansari",
+  "description": "Extension developed by Saeed Ansari",
   "icons": {
     "16": "logo.png",
     "32": "logo.png",
