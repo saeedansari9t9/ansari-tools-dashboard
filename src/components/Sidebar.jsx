@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
@@ -130,16 +130,16 @@ export default function Sidebar({ isOpen, onClose, role = "user" }) {
           </button>
         )}
 
-        <button className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition cursor-pointer">
+        <NavLink to="/profile" className={navLinkClass} onClick={onClose}>
           <User className="w-5 h-5 opacity-80" />
           Profile
-        </button>
+        </NavLink>
 
         {role !== "admin" && (
-          <button className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition cursor-pointer">
+          <NavLink to="/profile" className={navLinkClass} onClick={onClose}>
             <Lock className="w-5 h-5 opacity-80" />
             Change Password
-          </button>
+          </NavLink>
         )}
 
         <button
@@ -155,7 +155,7 @@ export default function Sidebar({ isOpen, onClose, role = "user" }) {
 
       {/* Profile Display */}
       <div className="p-4 border-t border-slate-100">
-        <div className="flex items-center gap-3 select-none p-2 rounded-xl hover:bg-slate-50 transition-all duration-200 cursor-pointer">
+        <Link to="/profile" className="flex items-center gap-3 select-none p-2 rounded-xl hover:bg-slate-50 transition-all duration-200 cursor-pointer">
           <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center border border-indigo-200/40 shrink-0 shadow-[0_2px_8px_rgba(85,41,179,0.08)]">
             <User className="w-5 h-5 text-indigo-600" />
           </div>
@@ -167,7 +167,7 @@ export default function Sidebar({ isOpen, onClose, role = "user" }) {
               @{user?.username || "username"}
             </div>
           </div>
-        </div>
+        </Link>
       </div>
     </div>
   );

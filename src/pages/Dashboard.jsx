@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { getMe, getMyTools, getToolCookies, getUsersWithTools } from "../utils/api";
 
 export default function Dashboard({ role }) {
+  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [me, setMe] = useState(null);
   const [tools, setTools] = useState([]);
@@ -292,31 +294,12 @@ export default function Dashboard({ role }) {
                         Expires {new Date(t.expiresAt).toLocaleDateString()}
                       </div>
 
-                      {isExtensionInstalled ? (
-                        <button
-                          onClick={() => {
-                            handleAccessTool(
-                              t.accessUrl,
-                              getToolSlug(t.name) ||
-                              t.name.toLowerCase().replace(/\s+/g, "")
-                            );
-                          }}
-                          className="mt-4 block w-full text-center rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 font-semibold cursor-pointer"
-                        >
-                          Access
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => {
-                            alert(
-                              "⚠️ Chrome Extension is not installed or enabled!\n\nPlease follow these steps to install:\n1. Open chrome://extensions/ in Google Chrome.\n2. Enable 'Developer mode' in the top-right.\n3. Click 'Load unpacked' in the top-left.\n4. Select the directory: C:\\Users\\WEB\\Desktop\\Latu\\ansari-tools-dashboard\\AnsariTools\n5. Once installed, reload this page to access your tools!"
-                            );
-                          }}
-                          className="mt-4 block w-full text-center rounded-xl bg-amber-500 hover:bg-amber-600 text-white py-2.5 font-semibold cursor-pointer"
-                        >
-                          Install Extension
-                        </button>
-                      )}
+                      <button
+                        onClick={() => navigate(`/tools/${t.slug}`)}
+                        className="mt-4 block w-full text-center rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 font-semibold cursor-pointer"
+                      >
+                        Access
+                      </button>
                     </div>
                   </div>
                 ))}

@@ -48,6 +48,7 @@ export const signupUser = (data) => API.post("/auth/signup", data);
 export const loginUser = (data) => API.post("/auth/login", data);
 export const getMe = () => API.get("/user/me");
 export const getMyTools = () => API.get("/user/my-tools");
+export const changePassword = (data) => API.post("/user/change-password", data);
 
 // ---------- ADMIN AUTH (SSO COOKIE) ----------
 export const adminMe = () => API.get("/admins/me");
@@ -69,3 +70,9 @@ export const getToolCookies = (slug) => API.get(`/user/tools/${slug}/cookies`);
 export const getUsersWithTools = () => API.get("/admin/users-with-tools");
 export const getTutorial = () => API.get("/user/tutorial");
 export const updateTutorial = (data) => API.put("/user/tutorial", data);    
+export const uploadExtension = (formData) =>
+  API.post("/admin/upload-extension", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });

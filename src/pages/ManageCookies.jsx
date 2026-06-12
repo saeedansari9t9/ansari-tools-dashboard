@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getAllTools, updateTool } from "../utils/api";
+import { getAllTools, updateTool, uploadExtension } from "../utils/api";
 
 export default function ManageCookies() {
   const [loading, setLoading] = useState(true);
@@ -9,6 +9,12 @@ export default function ManageCookies() {
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Extension upload states
+  const [file, setFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState("");
+  const [uploadError, setUploadError] = useState("");
 
   // Load all tools on mount
   const loadTools = async () => {
@@ -34,6 +40,41 @@ export default function ManageCookies() {
   useEffect(() => {
     loadTools();
   }, []);
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setFile(e.target.files[0]);
+      setUploadSuccess("");
+      setUploadError("");
+    }
+  };
+
+  const handleUploadExtension = async (e) => {
+    e.preventDefault();
+    setUploadSuccess("");
+    setUploadError("");
+
+    if (!file) {
+      setUploadError("Please select a file to upload.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("extensionFile", file);
+
+    setUploading(true);
+    try {
+      await uploadExtension(formData);
+      setUploadSuccess("✅ Extension file uploaded and updated successfully!");
+      setFile(null);
+      document.getElementById("extension-file-input").value = "";
+    } catch (err) {
+      console.error(err);
+      setUploadError(err.response?.data?.message || "Failed to upload extension file.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // Update cookies textarea when selected tool changes
   const handleToolChange = (e) => {
@@ -174,6 +215,48 @@ export default function ManageCookies() {
             </form>
           </div>
         )}
+
+        {/* Upload Extension Card */}
+        <div className="mt-8 bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm">
+          <h2 className="text-lg font-bold text-slate-900">Upload Extension File</h2>
+          <p className="text-sm text-slate-500 mt-1 mb-5">
+            Upload the extension file (e.g. .zip, .pdf, or image) so users can download it directly from their tool details page.
+          </p>
+
+          <form onSubmit={handleUploadExtension} className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+                Select File
+              </label>
+              <input
+                id="extension-file-input"
+                type="file"
+                onChange={handleFileChange}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 bg-slate-50 text-sm file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 cursor-pointer"
+              />
+            </div>
+
+            {uploadSuccess && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-xl font-medium">
+                {uploadSuccess}
+              </div>
+            )}
+
+            {uploadError && (
+              <div className="p-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded-xl font-medium">
+                {uploadError}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={uploading}
+              className="w-full h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              {uploading ? "Uploading..." : "Upload Extension File"}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

@@ -13,6 +13,8 @@ import AdminOnly from "./components/AdminOnly";
 import AssignTool from "./pages/AssignTool";
 import ManageCookies from "./pages/ManageCookies";
 import Tutorials from "./pages/Tutorials";
+import Profile from "./pages/Profile";
+import ToolDetails from "./pages/ToolDetails";
 
 export default function App() {
   return (
@@ -43,6 +45,30 @@ export default function App() {
               {(role) => (
                 <DashboardLayout role={role}>
                   <Tutorials role={role} />
+                </DashboardLayout>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              {(role) => (
+                <DashboardLayout role={role}>
+                  <Profile role={role} />
+                </DashboardLayout>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tools/:slug"
+          element={
+            <ProtectedRoute>
+              {(role) => (
+                <DashboardLayout role={role}>
+                  <ToolDetails role={role} />
                 </DashboardLayout>
               )}
             </ProtectedRoute>
