@@ -123,7 +123,9 @@ export default function ToolDetails() {
 
     const apiBase = API.defaults.baseURL;
     const hostBase = apiBase.replace(/\/api$/, "");
-    const downloadUrl = `${hostBase}${extensionFileUrl}`;
+    const downloadUrl = extensionFileUrl.startsWith("http")
+      ? extensionFileUrl
+      : `${hostBase}${extensionFileUrl}`;
 
     window.open(downloadUrl, "_blank");
 
