@@ -49,6 +49,7 @@ export const loginUser = (data) => API.post("/auth/login", data);
 export const getMe = () => API.get("/user/me");
 export const getMyTools = () => API.get("/user/my-tools");
 export const changePassword = (data) => API.post("/user/change-password", data);
+export const updateProfile = (data) => API.put("/user/update-profile", data);
 
 // ---------- ADMIN AUTH (SSO COOKIE) ----------
 export const adminMe = () => API.get("/admins/me");
@@ -60,6 +61,7 @@ export const deleteUser = (id) => API.delete(`/user/${id}`);         // ✅ adju
 export const createUser = (data) => API.post("/user", data);
 export const updateUser = (id, data) => API.put(`/user/${id}`, data); // optional
 export const resetUserPassword = (id, data) => API.post(`/user/${id}/reset-password`, data);
+export const getUserLogs = (params) => API.get("/user/logs", { params });
 
 // TOOLS
 export const getAllTools = (params) => API.get("/admin/tools", { params }); // ✅ adjust if needed

@@ -52,6 +52,130 @@ async function clearAllCookiesForDomain(baseDomain) {
     }
 }
 
+function getCanonicalToolKey(toolName) {
+    if (!toolName) return '';
+    const normalized = toolName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const map = {
+        chatgpt: 'chatgpt',
+        openai: 'chatgpt',
+        canva: 'canva',
+        canvapro: 'canva',
+        gemini: 'gemini',
+        google: 'gemini',
+        geminigoogle: 'gemini',
+        quillbot: 'quillbot',
+        quilbot: 'quillbot',
+        grammarly: 'grammarly',
+        grammerly: 'grammarly',
+        capcut: 'capcut',
+        semrush: 'semrush',
+        moz: 'moz',
+        ubersuggest: 'ubersuggest',
+        ubbersuggest: 'ubersuggest',
+        neilpatel: 'ubersuggest',
+        wordtune: 'wordtune',
+        vistacreate: 'vistacreate',
+        picmonkey: 'picmonkey',
+        envatoelements: 'envatoelements',
+        envato: 'envatoelements',
+        elements: 'envatoelements',
+        storyblocks: 'storyblocks',
+        placeit: 'placeit',
+        skillshare: 'skillshare',
+        jasper: 'jasper',
+        jasperai: 'jasper'
+    };
+    return map[normalized] || normalized;
+}
+
+const TOOL_CONFIGS = {
+    chatgpt: {
+        domains: ['chatgpt.com', 'openai.com'],
+        flagCookieUrl: 'https://chatgpt.com',
+        flagCookieDomain: '.chatgpt.com'
+    },
+    canva: {
+        domains: ['canva.com'],
+        flagCookieUrl: 'https://canva.com',
+        flagCookieDomain: '.canva.com'
+    },
+    gemini: {
+        domains: ['google.com'],
+        flagCookieUrl: 'https://gemini.google.com',
+        flagCookieDomain: '.google.com'
+    },
+    quillbot: {
+        domains: ['quillbot.com'],
+        flagCookieUrl: 'https://quillbot.com',
+        flagCookieDomain: '.quillbot.com'
+    },
+    grammarly: {
+        domains: ['grammarly.com'],
+        flagCookieUrl: 'https://grammarly.com',
+        flagCookieDomain: '.grammarly.com'
+    },
+    capcut: {
+        domains: ['capcut.com'],
+        flagCookieUrl: 'https://capcut.com',
+        flagCookieDomain: '.capcut.com'
+    },
+    semrush: {
+        domains: ['semrush.com'],
+        flagCookieUrl: 'https://semrush.com',
+        flagCookieDomain: '.semrush.com'
+    },
+    moz: {
+        domains: ['moz.com'],
+        flagCookieUrl: 'https://moz.com',
+        flagCookieDomain: '.moz.com'
+    },
+    ubersuggest: {
+        domains: ['neilpatel.com'],
+        flagCookieUrl: 'https://neilpatel.com',
+        flagCookieDomain: '.neilpatel.com'
+    },
+    wordtune: {
+        domains: ['wordtune.com'],
+        flagCookieUrl: 'https://wordtune.com',
+        flagCookieDomain: '.wordtune.com'
+    },
+    vistacreate: {
+        domains: ['vistacreate.com'],
+        flagCookieUrl: 'https://vistacreate.com',
+        flagCookieDomain: '.vistacreate.com'
+    },
+    picmonkey: {
+        domains: ['picmonkey.com'],
+        flagCookieUrl: 'https://picmonkey.com',
+        flagCookieDomain: '.picmonkey.com'
+    },
+    envatoelements: {
+        domains: ['envato.com'],
+        flagCookieUrl: 'https://elements.envato.com',
+        flagCookieDomain: '.envato.com'
+    },
+    storyblocks: {
+        domains: ['storyblocks.com'],
+        flagCookieUrl: 'https://storyblocks.com',
+        flagCookieDomain: '.storyblocks.com'
+    },
+    placeit: {
+        domains: ['placeit.net'],
+        flagCookieUrl: 'https://placeit.net',
+        flagCookieDomain: '.placeit.net'
+    },
+    skillshare: {
+        domains: ['skillshare.com'],
+        flagCookieUrl: 'https://skillshare.com',
+        flagCookieDomain: '.skillshare.com'
+    },
+    jasper: {
+        domains: ['jasper.ai'],
+        flagCookieUrl: 'https://jasper.ai',
+        flagCookieDomain: '.jasper.ai'
+    }
+};
+
 chrome.runtime.onInstalled.addListener(async () => {
     console.log('[AI Tools BG] Extension ready — v5 (cookie injection)');
     chrome.storage.local.remove('pendingLogin');
@@ -69,43 +193,60 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         (async () => {
             const cookies  = msg.cookies  || [];
             const openUrl  = msg.url      || 'https://chatgpt.com';
-            const clearUrl = msg.clearUrl || 'https://chatgpt.com';
 
             // Clear any old pending logins to avoid automation script conflicts
             chrome.storage.local.remove('pendingLogin');
 
-            // Step 1: Clear existing session cookies first
-            if (openUrl.includes('chatgpt.com') || openUrl.includes('openai.com')) {
-                await clearAllCookiesForDomain('chatgpt.com');
-                await clearAllCookiesForDomain('openai.com');
-            } else if (openUrl.includes('canva.com')) {
-                await clearAllCookiesForDomain('canva.com');
-            } else {
-                try {
-                    const existing = await chrome.cookies.getAll({ url: clearUrl });
-                    for (const c of existing) {
-                        const scheme = c.secure ? 'https' : 'http';
-                        const domain = c.domain.replace(/^\./, '');
-                        const removeDetails = {
-                            url:  `${scheme}://${domain}${c.path}`,
-                            name: c.name
-                        };
-                        if (c.partitionKey) removeDetails.partitionKey = c.partitionKey;
-                        if (c.storeId) removeDetails.storeId = c.storeId;
-                        await chrome.cookies.remove(removeDetails);
-                    }
-                    console.log('[AI Tools BG] Cleared', existing.length, 'old cookies');
-                } catch (e) {
-                    console.warn('[AI Tools BG] Cookie clear error:', e.message);
+            let toolKey = msg.tool ? getCanonicalToolKey(msg.tool) : null;
+            if (!toolKey) {
+                if (openUrl.includes('chatgpt.com') || openUrl.includes('openai.com')) {
+                    toolKey = 'chatgpt';
+                } else if (openUrl.includes('canva.com')) {
+                    toolKey = 'canva';
+                } else if (openUrl.includes('google.com')) {
+                    toolKey = 'gemini';
+                } else if (openUrl.includes('quillbot.com')) {
+                    toolKey = 'quillbot';
+                } else if (openUrl.includes('grammarly.com')) {
+                    toolKey = 'grammarly';
+                } else if (openUrl.includes('capcut.com')) {
+                    toolKey = 'capcut';
+                } else if (openUrl.includes('semrush.com')) {
+                    toolKey = 'semrush';
+                } else if (openUrl.includes('moz.com')) {
+                    toolKey = 'moz';
+                } else if (openUrl.includes('neilpatel.com')) {
+                    toolKey = 'ubersuggest';
+                } else if (openUrl.includes('wordtune.com')) {
+                    toolKey = 'wordtune';
+                } else if (openUrl.includes('vistacreate.com')) {
+                    toolKey = 'vistacreate';
+                } else if (openUrl.includes('picmonkey.com')) {
+                    toolKey = 'picmonkey';
+                } else if (openUrl.includes('envato.com')) {
+                    toolKey = 'envatoelements';
+                } else if (openUrl.includes('storyblocks.com')) {
+                    toolKey = 'storyblocks';
+                } else if (openUrl.includes('placeit.net')) {
+                    toolKey = 'placeit';
+                } else if (openUrl.includes('skillshare.com')) {
+                    toolKey = 'skillshare';
+                } else if (openUrl.includes('jasper.ai')) {
+                    toolKey = 'jasper';
+                } else {
+                    toolKey = 'chatgpt';
                 }
             }
 
-            // Step 1.5: Set local storage clearing flag
-            let tool = 'chatgpt';
-            if (openUrl.includes('canva.com')) {
-                tool = 'canva';
+            const config = TOOL_CONFIGS[toolKey] || TOOL_CONFIGS['chatgpt'];
+
+            // Step 1: Clear existing session cookies first
+            for (const domain of config.domains) {
+                await clearAllCookiesForDomain(domain);
             }
-            await chrome.storage.local.set({ clearLocalStorageFor: tool });
+
+            // Step 1.5: Set local storage clearing flag
+            await chrome.storage.local.set({ clearLocalStorageFor: toolKey });
 
             // Step 1.6: Set clear_storage_flag cookie synchronously to trigger main world content script clearing
             try {
@@ -113,19 +254,20 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                     name: 'clear_storage_flag',
                     value: '1',
                     path: '/',
-                    secure: true
+                    secure: true,
+                    url: config.flagCookieUrl,
+                    domain: config.flagCookieDomain
                 };
-                if (tool === 'chatgpt') {
-                    flagCookie.url = 'https://chatgpt.com';
-                    flagCookie.domain = '.chatgpt.com';
-                    await chrome.cookies.set(flagCookie);
-                    flagCookie.url = 'https://openai.com';
-                    flagCookie.domain = '.openai.com';
-                    await chrome.cookies.set(flagCookie);
-                } else if (tool === 'canva') {
-                    flagCookie.url = 'https://canva.com';
-                    flagCookie.domain = '.canva.com';
-                    await chrome.cookies.set(flagCookie);
+                await chrome.cookies.set(flagCookie);
+                if (toolKey === 'chatgpt') {
+                    await chrome.cookies.set({
+                        name: 'clear_storage_flag',
+                        value: '1',
+                        path: '/',
+                        secure: true,
+                        url: 'https://openai.com',
+                        domain: '.openai.com'
+                    });
                 }
             } catch (e) {
                 console.warn('[AI Tools BG] Failed to set clear_storage_flag cookie:', e.message);
@@ -135,8 +277,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             let injected = 0;
             for (const c of cookies) {
                 try {
-                    // Compute correct URL based on domain to avoid Chrome domain/URL validation failures
-                    const domain = c.domain || '.chatgpt.com';
+                    const domain = c.domain || ('.' + config.domains[0]);
                     const host = domain.startsWith('.') ? domain.substring(1) : domain;
                     const scheme = c.secure !== false ? 'https' : 'http';
                     const computedUrl = `${scheme}://${host}${c.path || '/'}`;
@@ -173,7 +314,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                     console.warn('[AI Tools BG] Cookie inject failed for:', c.name, '—', e.message);
                 }
             }
-            console.log(`[AI Tools BG] ✅ Injected ${injected}/${cookies.length} cookies`);
+            console.log(`[AI Tools BG] ✅ Injected ${injected}/${cookies.length} cookies for ${toolKey}`);
 
             // Step 3: Open tool — user lands already logged in
             chrome.tabs.create({ url: openUrl, active: true }, (tab) => {
@@ -193,26 +334,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type === 'INJECT_COOKIES_ONLY') {
         (async () => {
             const cookies  = msg.cookies  || [];
-            const tool     = msg.tool     || 'chatgpt';
+            const toolKey  = getCanonicalToolKey(msg.tool || 'chatgpt');
+            const config   = TOOL_CONFIGS[toolKey] || TOOL_CONFIGS['chatgpt'];
 
             // Clear any old pending logins and clear debug logs for a fresh run
             chrome.storage.local.remove('pendingLogin');
-            await chrome.storage.local.set({ debugLogs: [`[${new Date().toLocaleTimeString()}] Starting cookie injection flow...`] });
+            await chrome.storage.local.set({ debugLogs: [`[${new Date().toLocaleTimeString()}] Starting cookie injection flow for ${toolKey}...`] });
             await logDebug(`Total cookies received from backend for injection: ${cookies.length}`);
 
             // Step 1: Clear existing cookies explicitly
-            if (tool === 'chatgpt') {
-                await clearAllCookiesForDomain('chatgpt.com');
-                await clearAllCookiesForDomain('openai.com');
-            } else if (tool === 'canva') {
-                await clearAllCookiesForDomain('canva.com');
-            } else {
-                await clearAllCookiesForDomain('chatgpt.com');
-                await clearAllCookiesForDomain('openai.com');
+            for (const domain of config.domains) {
+                await clearAllCookiesForDomain(domain);
             }
 
             // Step 1.5: Set local storage clearing flag
-            await chrome.storage.local.set({ clearLocalStorageFor: tool });
+            await chrome.storage.local.set({ clearLocalStorageFor: toolKey });
 
             // Step 1.6: Set clear_storage_flag cookie synchronously to trigger main world content script clearing
             try {
@@ -220,19 +356,20 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                     name: 'clear_storage_flag',
                     value: '1',
                     path: '/',
-                    secure: true
+                    secure: true,
+                    url: config.flagCookieUrl,
+                    domain: config.flagCookieDomain
                 };
-                if (tool === 'chatgpt') {
-                    flagCookie.url = 'https://chatgpt.com';
-                    flagCookie.domain = '.chatgpt.com';
-                    await chrome.cookies.set(flagCookie);
-                    flagCookie.url = 'https://openai.com';
-                    flagCookie.domain = '.openai.com';
-                    await chrome.cookies.set(flagCookie);
-                } else if (tool === 'canva') {
-                    flagCookie.url = 'https://canva.com';
-                    flagCookie.domain = '.canva.com';
-                    await chrome.cookies.set(flagCookie);
+                await chrome.cookies.set(flagCookie);
+                if (toolKey === 'chatgpt') {
+                    await chrome.cookies.set({
+                        name: 'clear_storage_flag',
+                        value: '1',
+                        path: '/',
+                        secure: true,
+                        url: 'https://openai.com',
+                        domain: '.openai.com'
+                    });
                 }
             } catch (e) {
                 await logDebug(`[INJECT_COOKIES_ONLY] Failed to set clear_storage_flag cookie: ${e.message}`);
@@ -242,7 +379,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             let injected = 0;
             for (const c of cookies) {
                 try {
-                    const domain = c.domain || '.chatgpt.com';
+                    const domain = c.domain || ('.' + config.domains[0]);
                     const host = domain.startsWith('.') ? domain.substring(1) : domain;
                     const scheme = c.secure !== false ? 'https' : 'http';
                     const computedUrl = `${scheme}://${host}${c.path || '/'}`;
@@ -470,8 +607,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     // ══════════════════════════════════════════════════════════════════
     if (msg.type === 'CLEAR_TOOL_COOKIES') {
         (async () => {
-            await clearAllCookiesForDomain('chatgpt.com');
-            await clearAllCookiesForDomain('openai.com');
+            const toolKey = getCanonicalToolKey(msg.tool || 'chatgpt');
+            const config = TOOL_CONFIGS[toolKey] || TOOL_CONFIGS['chatgpt'];
+            for (const domain of config.domains) {
+                await clearAllCookiesForDomain(domain);
+            }
             sendResponse({ ok: true });
         })();
         return true;

@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { getAllUsers, deleteUser, createUser, resetUserPassword } from "../utils/api";
 
 export default function AllUsers() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
   const [q, setQ] = useState("");
@@ -202,6 +204,12 @@ export default function AllUsers() {
 
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => navigate(`/admin/login-logs?userId=${id}`)}
+                            className="h-8 px-4 rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 font-semibold text-xs transition active:scale-95 cursor-pointer"
+                          >
+                            Logs
+                          </button>
                           <button
                             onClick={() => setResetUser({ id, username })}
                             className="h-8 px-4 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100/70 font-semibold text-xs transition active:scale-95 cursor-pointer"

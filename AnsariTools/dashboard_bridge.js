@@ -11,6 +11,42 @@
  */
 console.log('[AI Tools Bridge] Loaded on:', window.location.pathname);
 
+function getCanonicalToolKey(toolName) {
+    if (!toolName) return '';
+    const normalized = toolName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const map = {
+        chatgpt: 'chatgpt',
+        openai: 'chatgpt',
+        canva: 'canva',
+        canvapro: 'canva',
+        gemini: 'gemini',
+        google: 'gemini',
+        geminigoogle: 'gemini',
+        quillbot: 'quillbot',
+        quilbot: 'quillbot',
+        grammarly: 'grammarly',
+        grammerly: 'grammarly',
+        capcut: 'capcut',
+        semrush: 'semrush',
+        moz: 'moz',
+        ubersuggest: 'ubersuggest',
+        ubbersuggest: 'ubersuggest',
+        neilpatel: 'ubersuggest',
+        wordtune: 'wordtune',
+        vistacreate: 'vistacreate',
+        picmonkey: 'picmonkey',
+        envatoelements: 'envatoelements',
+        envato: 'envatoelements',
+        elements: 'envatoelements',
+        storyblocks: 'storyblocks',
+        placeit: 'placeit',
+        skillshare: 'skillshare',
+        jasper: 'jasper',
+        jasperai: 'jasper'
+    };
+    return map[normalized] || normalized;
+}
+
 // Confirm to dashboard that extension is active
 window.postMessage({ type: 'AI_TOOL_BRIDGE_READY' }, window.location.origin);
 window.postMessage({ type: 'AI_TOOL_BRIDGE_READY' }, '*');
@@ -39,6 +75,21 @@ chrome.runtime.onMessage.addListener((msg) => {
 const TOOL_DASHBOARD_URLS = {
     chatgpt: 'https://chatgpt.com/',
     canva: 'https://www.canva.com/',
+    gemini: 'https://gemini.google.com/',
+    quillbot: 'https://quillbot.com/',
+    grammarly: 'https://www.grammarly.com/',
+    capcut: 'https://www.capcut.com/',
+    semrush: 'https://www.semrush.com/',
+    moz: 'https://moz.com/',
+    ubersuggest: 'https://app.neilpatel.com/',
+    wordtune: 'https://www.wordtune.com/',
+    vistacreate: 'https://vistacreate.com/',
+    picmonkey: 'https://www.picmonkey.com/',
+    envatoelements: 'https://elements.envato.com/',
+    storyblocks: 'https://www.storyblocks.com/',
+    placeit: 'https://placeit.net/',
+    skillshare: 'https://www.skillshare.com/',
+    jasper: 'https://app.jasper.ai/'
 };
 
 if (window.location.pathname.includes('/access/')) {
@@ -71,7 +122,8 @@ if (window.location.pathname.includes('/access/')) {
             return;
         }
 
-        const tool = dataElement.getAttribute('data-tool');
+        const rawTool = dataElement.getAttribute('data-tool');
+        const tool = getCanonicalToolKey(rawTool);
         const rawCookies = dataElement.getAttribute('data-cookies');
         if (!rawCookies) {
             console.error('[AI Tools Bridge] data-cookies attribute is empty');
@@ -182,14 +234,15 @@ window.addEventListener('message', (event) => {
 
     if (event.data && event.data.type === 'AI_TOOL_START_AUTO_SETUP') {
         const { tool, email, password, url } = event.data;
-        console.log('[AI Tools Bridge] Starting automated setup for:', tool);
+        const canonicalTool = getCanonicalToolKey(tool);
+        console.log('[AI Tools Bridge] Starting automated setup for:', canonicalTool);
         
         // Clear cookies via background script first to prevent premature captures
-        chrome.runtime.sendMessage({ type: 'CLEAR_TOOL_COOKIES' }, () => {
+        chrome.runtime.sendMessage({ type: 'CLEAR_TOOL_COOKIES', tool: canonicalTool }, () => {
             // Store credentials in storage, and flag capture mode
             chrome.storage.local.set({
-                pendingLogin: { tool, email, password, url, step: 'start', timestamp: Date.now() },
-                captureSession: { tool, timestamp: Date.now() }
+                pendingLogin: { tool: canonicalTool, email, password, url, step: 'start', timestamp: Date.now() },
+                captureSession: { tool: canonicalTool, timestamp: Date.now() }
             }, () => {
                 // Tell background to open the login tab
                 chrome.runtime.sendMessage({ type: 'OPEN_TOOL_TAB', url }, () => {
@@ -226,17 +279,64 @@ const TOOL_COOKIE_URLS = {
     chatgpt: [
         'https://chatgpt.com',
         'https://chat.openai.com',
-        // DO NOT include auth.openai.com — breaks auth flow (HTTP 500)
     ],
     canva: [
         'https://www.canva.com',
         'https://canva.com',
     ],
+    gemini: [
+        'https://gemini.google.com',
+        'https://google.com',
+    ],
+    quillbot: [
+        'https://quillbot.com',
+    ],
+    grammarly: [
+        'https://grammarly.com',
+    ],
+    capcut: [
+        'https://capcut.com',
+    ],
+    semrush: [
+        'https://semrush.com',
+    ],
+    moz: [
+        'https://moz.com',
+    ],
+    ubersuggest: [
+        'https://neilpatel.com',
+    ],
+    wordtune: [
+        'https://wordtune.com',
+    ],
+    vistacreate: [
+        'https://vistacreate.com',
+    ],
+    picmonkey: [
+        'https://picmonkey.com',
+    ],
+    envatoelements: [
+        'https://elements.envato.com',
+        'https://envato.com',
+    ],
+    storyblocks: [
+        'https://storyblocks.com',
+    ],
+    placeit: [
+        'https://placeit.net',
+    ],
+    skillshare: [
+        'https://skillshare.com',
+    ],
+    jasper: [
+        'https://jasper.ai',
+    ]
 };
 
 // ─── Clear session cookies for a tool domain (METHOD 2 only) ─────────────
 async function clearSessionCookies(tool) {
-    const urls = TOOL_COOKIE_URLS[tool] || [];
+    const canonicalTool = getCanonicalToolKey(tool);
+    const urls = TOOL_COOKIE_URLS[canonicalTool] || [];
     let total = 0;
     for (const url of urls) {
         try {
@@ -271,17 +371,19 @@ window.addEventListener('message', async (event) => {
     if (cookies && cookies.length > 0) {
         console.log(`[AI Tools Bridge] 🍪 Method: Cookie Injection (${cookies.length} cookies)`);
 
+        const canonicalTool = getCanonicalToolKey(tool);
         chrome.runtime.sendMessage({
             type:     'INJECT_COOKIES_AND_OPEN',
             cookies:  cookies,
             url:      url,   // land here after injection
             clearUrl: url,   // clear this domain first
+            tool:     canonicalTool
         }, (response) => {
             console.log('[AI Tools Bridge] ✅ Cookie injection dispatched:', response);
         });
 
         // Confirm to blade page that extension handled it
-        window.postMessage({ type: 'AI_TOOL_TAB_OPENING', tool }, window.location.origin);
+        window.postMessage({ type: 'AI_TOOL_TAB_OPENING', tool: canonicalTool }, window.location.origin);
         return;
     }
 
@@ -295,19 +397,20 @@ window.addEventListener('message', async (event) => {
 
     console.log(`[AI Tools Bridge] 📧 Method: Email/Password for ${email}`);
 
+    const canonicalTool = getCanonicalToolKey(tool);
     // 1) Clear existing session via background script to bypass content script limits
-    chrome.runtime.sendMessage({ type: 'CLEAR_TOOL_COOKIES' }, async () => {
+    chrome.runtime.sendMessage({ type: 'CLEAR_TOOL_COOKIES', tool: canonicalTool }, async () => {
         // 2) Store credentials (content script on login page will read these)
         await chrome.storage.local.set({
-            pendingLogin: { tool, email, password, url, step: 'start', timestamp: Date.now() }
+            pendingLogin: { tool: canonicalTool, email, password, url, step: 'start', timestamp: Date.now() }
         });
 
         // 3) Tell background to open the login tab
         chrome.runtime.sendMessage({ type: 'OPEN_TOOL_TAB', url }, () => {
-            console.log('[AI Tools Bridge] ✅ Login tab opening for:', tool);
+            console.log('[AI Tools Bridge] ✅ Login tab opening for:', canonicalTool);
         });
 
         // 4) Confirm to blade page
-        window.postMessage({ type: 'AI_TOOL_TAB_OPENING', tool }, window.location.origin);
+        window.postMessage({ type: 'AI_TOOL_TAB_OPENING', tool: canonicalTool }, window.location.origin);
     });
 });

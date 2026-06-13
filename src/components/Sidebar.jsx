@@ -10,7 +10,8 @@ import {
   CreditCard,
   User,
   Lock,
-  LogOut
+  LogOut,
+  History
 } from "lucide-react";
 import logo from "../assets/images/logo.png";
 import { logoutAll } from "../utils/logout";
@@ -26,15 +27,19 @@ const navLinkClass = ({ isActive }) =>
 export default function Sidebar({ isOpen, onClose, role = "user" }) {
   const [user, setUser] = useState(null);
 
+  const fetchUser = async () => {
+    try {
+      const res = await getMe();
+      setUser(res.data);
+    } catch (err) {
+      console.error("Failed to load user in sidebar:", err);
+    }
+  };
+
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await getMe();
-        setUser(res.data);
-      } catch (err) {
-        console.error("Failed to load user in sidebar:", err);
-      }
-    })();
+    fetchUser();
+    window.addEventListener("profile-updated", fetchUser);
+    return () => window.removeEventListener("profile-updated", fetchUser);
   }, []);
 
   const handleLogout = async () => {
@@ -69,34 +74,53 @@ export default function Sidebar({ isOpen, onClose, role = "user" }) {
       </div>
 
       {/* Nav */}
-      <nav className="px-4 mt-2 space-y-2">
-        {/* ✅ COMMON (User + Admin) */}
+      <nav className="px-4 mt-2 space-y-1 flex-1 overflow-y-auto">
+        {/* ✅ Dashboard */}
         <NavLink to="/dashboard" className={navLinkClass} onClick={onClose}>
           <LayoutDashboard className="w-5 h-5 opacity-80" />
           Dashboard
         </NavLink>
+        <div className="border-t border-slate-100/60 my-1" />
 
+        {/* ✅ Plan Info (User Only) */}
+        {role !== "admin" && (
+          <>
+            <NavLink to="/plan-info" className={navLinkClass} onClick={onClose}>
+              <CreditCard className="w-5 h-5 opacity-80" />
+              Plan Info
+            </NavLink>
+            <div className="border-t border-slate-100/60 my-1" />
+          </>
+        )}
+
+        {/* ✅ Profile */}
+        <NavLink to="/profile" className={navLinkClass} onClick={onClose}>
+          <User className="w-5 h-5 opacity-80" />
+          Profile
+        </NavLink>
+        <div className="border-t border-slate-100/60 my-1" />
+
+        {/* ✅ Tutorials */}
         <NavLink to="/tutorials" className={navLinkClass} onClick={onClose}>
           <Video className="w-5 h-5 opacity-80" />
           Tutorials
         </NavLink>
+        <div className="border-t border-slate-100/60 my-1" />
 
         {/* ✅ ADMIN ONLY */}
         {role === "admin" && (
           <>
-            <div className="pt-3 pb-1 px-2 text-xs uppercase tracking-wider text-slate-400 font-semibold">
-              Admin
-            </div>
-
             <NavLink to="/admin/users" className={navLinkClass} onClick={onClose}>
               <Users className="w-5 h-5 opacity-80" />
               All Users
             </NavLink>
+            <div className="border-t border-slate-100/60 my-1" />
 
             <NavLink to="/admin/tools" className={navLinkClass} onClick={onClose}>
               <Wrench className="w-5 h-5 opacity-80" />
               All Tools
             </NavLink>
+            <div className="border-t border-slate-100/60 my-1" />
 
             <NavLink
               to="/admin/manage-cookies"
@@ -106,6 +130,7 @@ export default function Sidebar({ isOpen, onClose, role = "user" }) {
               <Cookie className="w-5 h-5 opacity-80" />
               Manage Cookies
             </NavLink>
+            <div className="border-t border-slate-100/60 my-1" />
 
             <NavLink
               to="/admin/assign-tool"
@@ -115,33 +140,21 @@ export default function Sidebar({ isOpen, onClose, role = "user" }) {
               <LinkIcon className="w-5 h-5 opacity-80" />
               Assign Tools
             </NavLink>
+            <div className="border-t border-slate-100/60 my-1" />
+
+            <NavLink
+              to="/admin/login-logs"
+              className={navLinkClass}
+              onClick={onClose}
+            >
+              <History className="w-5 h-5 opacity-80" />
+              Login Logs
+            </NavLink>
+            <div className="border-t border-slate-100/60 my-1" />
           </>
         )}
 
-        {/* ✅ ACCOUNT SECTION DIRECTLY IN SIDEBAR */}
-        <div className="pt-3 pb-1 px-2 text-xs uppercase tracking-wider text-slate-400 font-semibold">
-          Account
-        </div>
-
-        {role !== "admin" && (
-          <button className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition cursor-pointer">
-            <CreditCard className="w-5 h-5 opacity-80" />
-            Plan Info
-          </button>
-        )}
-
-        <NavLink to="/profile" className={navLinkClass} onClick={onClose}>
-          <User className="w-5 h-5 opacity-80" />
-          Profile
-        </NavLink>
-
-        {role !== "admin" && (
-          <NavLink to="/profile" className={navLinkClass} onClick={onClose}>
-            <Lock className="w-5 h-5 opacity-80" />
-            Change Password
-          </NavLink>
-        )}
-
+        {/* ✅ Logout */}
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50/50 transition cursor-pointer"
@@ -150,8 +163,6 @@ export default function Sidebar({ isOpen, onClose, role = "user" }) {
           Logout
         </button>
       </nav>
-
-      <div className="flex-1" />
 
       {/* Profile Display */}
       <div className="p-4 border-t border-slate-100">
@@ -175,7 +186,7 @@ export default function Sidebar({ isOpen, onClose, role = "user" }) {
   return (
     <>
       {/* Desktop sidebar */}
-      <div className="hidden md:block min-h-screen">{content}</div>
+      <div className="hidden md:block sticky top-0 h-screen shrink-0">{content}</div>
 
       {/* Mobile drawer */}
       <div

@@ -9,12 +9,14 @@ import DashboardLayout from "./pages/DashboardLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AllUsers from "./pages/AllUsers";
 import AllTools from "./pages/AllTools";
+import LoginLogs from "./pages/LoginLogs";
 import AdminOnly from "./components/AdminOnly";
 import AssignTool from "./pages/AssignTool";
 import ManageCookies from "./pages/ManageCookies";
 import Tutorials from "./pages/Tutorials";
 import Profile from "./pages/Profile";
 import ToolDetails from "./pages/ToolDetails";
+import PlanInfo from "./pages/PlanInfo";
 
 export default function App() {
   return (
@@ -57,6 +59,18 @@ export default function App() {
               {(role) => (
                 <DashboardLayout role={role}>
                   <Profile role={role} />
+                </DashboardLayout>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/plan-info"
+          element={
+            <ProtectedRoute>
+              {(role) => (
+                <DashboardLayout role={role}>
+                  <PlanInfo role={role} />
                 </DashboardLayout>
               )}
             </ProtectedRoute>
@@ -114,6 +128,20 @@ export default function App() {
                 <DashboardLayout role={role}>
                   <AdminOnly role={role}>
                     <AllUsers />
+                  </AdminOnly>
+                </DashboardLayout>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/login-logs"
+          element={
+            <ProtectedRoute>
+              {(role) => (
+                <DashboardLayout role={role}>
+                  <AdminOnly role={role}>
+                    <LoginLogs />
                   </AdminOnly>
                 </DashboardLayout>
               )}

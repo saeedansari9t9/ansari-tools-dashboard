@@ -291,7 +291,11 @@ export default function Dashboard({ role }) {
                     <div className="p-4">
                       <div className="text-slate-900 font-semibold">{t.name}</div>
                       <div className="text-xs text-slate-500 mt-1">
-                        Expires {new Date(t.expiresAt).toLocaleDateString()}
+                        Expires {new Date(t.expiresAt).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
                       </div>
 
                       <button
