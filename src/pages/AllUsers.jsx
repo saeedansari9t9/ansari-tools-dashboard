@@ -167,44 +167,46 @@ export default function AllUsers() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+    <div className="p-4 sm:p-6 w-full max-w-full overflow-hidden">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">All Users</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">All Users</h1>
+          <p className="text-sm text-slate-500 mt-1">
             Manage users, search and remove accounts.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search by name/username/role…"
-            className="h-10 w-72 max-w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-200"
+            placeholder="Search by name/username..."
+            className="h-10 w-full md:w-64 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-800"
           />
-          <button
-            onClick={load}
-            className="h-10 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 px-4 text-sm hover:bg-slate-200 transition-colors cursor-pointer"
-          >
-            Refresh
-          </button>
-          <button
-            onClick={() => setModalOpen(true)}
-            className="h-10 rounded-xl bg-indigo-600 text-white px-4 text-sm font-semibold hover:bg-indigo-700 shadow-md shadow-indigo-600/10 transition-all active:scale-95 cursor-pointer"
-          >
-            + Add User
-          </button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={load}
+              className="h-10 flex-1 sm:flex-initial rounded-xl bg-slate-100 border border-slate-200 text-slate-700 px-4 text-sm hover:bg-slate-200 transition-colors cursor-pointer font-medium"
+            >
+              Refresh
+            </button>
+            <button
+              onClick={() => setModalOpen(true)}
+              className="h-10 flex-1 sm:flex-initial rounded-xl bg-indigo-600 text-white px-4 text-sm font-semibold hover:bg-indigo-700 shadow-md shadow-indigo-600/10 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+            >
+              + Add User
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="mt-5 rounded-2xl border border-slate-200 bg-white overflow-hidden">
+      <div className="mt-5 rounded-2xl border border-slate-200 bg-white overflow-hidden w-full max-w-full">
         {loading ? (
           <div className="p-6 text-sm text-slate-500">Loading…</div>
         ) : error ? (
           <div className="p-6 text-sm text-red-600">{error}</div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto w-full">
             <table className="min-w-[900px] w-full text-sm border-collapse">
               <thead>
                 <tr className="border-b border-slate-100 text-slate-400 text-[11px] uppercase tracking-wider font-bold">

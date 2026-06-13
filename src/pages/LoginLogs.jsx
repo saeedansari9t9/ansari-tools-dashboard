@@ -112,11 +112,24 @@ export default function LoginLogs() {
     return `${browser} on ${os}`;
   };
 
+  const uniqueLogs = useMemo(() => {
+    const seen = new Set();
+    const result = [];
+    for (const log of logs) {
+      const userId = log.user?._id || log.user?.id;
+      if (userId && !seen.has(userId)) {
+        seen.add(userId);
+        result.push(log);
+      }
+    }
+    return result;
+  }, [logs]);
+
   const filteredLogs = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    if (!q) return logs;
+    if (!q) return uniqueLogs;
 
-    return logs.filter((log) => {
+    return uniqueLogs.filter((log) => {
       const u = log.user || {};
       const name = (u.name || "").toLowerCase();
       const username = (u.username || "").toLowerCase();
@@ -126,7 +139,7 @@ export default function LoginLogs() {
 
       return name.includes(q) || username.includes(q) || ip.includes(q) || ua.includes(q) || device.includes(q);
     });
-  }, [logs, searchQuery]);
+  }, [uniqueLogs, searchQuery]);
 
   const handleClearFilters = () => {
     setSelectedUser("");
@@ -135,11 +148,11 @@ export default function LoginLogs() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6 w-full max-w-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 flex-wrap border-b border-slate-100 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-5">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
             <History className="w-6 h-6 text-indigo-600" /> User Login Logs
           </h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -149,7 +162,7 @@ export default function LoginLogs() {
 
         <button
           onClick={fetchLogs}
-          className="h-10 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 px-4 text-sm hover:bg-slate-200 transition-colors cursor-pointer font-medium"
+          className="h-10 w-full sm:w-auto rounded-xl bg-slate-100 border border-slate-200 text-slate-700 px-4 text-sm hover:bg-slate-200 transition-colors cursor-pointer font-medium"
         >
           Refresh Logs
         </button>
@@ -218,8 +231,8 @@ export default function LoginLogs() {
         ) : error ? (
           <div className="p-8 text-center text-sm text-rose-600 font-semibold">{error}</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
+          <div className="overflow-x-auto w-full">
+            <table className="min-w-[900px] w-full text-sm border-collapse">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/40 text-slate-400 text-[11px] uppercase tracking-wider font-bold text-left">
                   <th className="px-6 py-4 font-bold">User</th>
