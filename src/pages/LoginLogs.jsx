@@ -15,6 +15,12 @@ export default function LoginLogs() {
   const [error, setError] = useState("");
   const [copiedIp, setCopiedIp] = useState(null);
 
+  // User Logs modal states
+  const [logsUser, setLogsUser] = useState(null); // stores user object
+  const [userLogs, setUserLogs] = useState([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
+  const [logsError, setLogsError] = useState("");
+
   // Load list of users for dropdown filter
   useEffect(() => {
     (async () => {
@@ -60,6 +66,28 @@ export default function LoginLogs() {
     setCopiedIp(ip);
     setTimeout(() => setCopiedIp(null), 2000);
   };
+
+  const fetchUserLogs = async (userId) => {
+    setLoadingLogs(true);
+    setLogsError("");
+    try {
+      const res = await getUserLogs({ userId });
+      setUserLogs(res.data?.logs || []);
+    } catch (err) {
+      setLogsError(err.response?.data?.message || "Failed to load login logs");
+    } finally {
+      setLoadingLogs(false);
+    }
+  };
+
+  useEffect(() => {
+    if (logsUser) {
+      const id = logsUser._id || logsUser.id;
+      fetchUserLogs(id);
+    } else {
+      setUserLogs([]);
+    }
+  }, [logsUser]);
 
   // Parsing helper to make User-Agent readable
   const parseUA = (ua) => {
@@ -232,7 +260,8 @@ export default function LoginLogs() {
                   return (
                     <tr
                       key={log._id || log.id}
-                      className="border-b border-slate-100 hover:bg-slate-50/30 transition-colors"
+                      onClick={() => setLogsUser(log.user)}
+                      className="border-b border-slate-100 hover:bg-slate-50/30 transition-colors cursor-pointer"
                     >
                       {/* User Info */}
                       <td className="px-6 py-4">
@@ -254,7 +283,10 @@ export default function LoginLogs() {
                             {displayIp}
                           </span>
                           <button
-                            onClick={() => handleCopyIp(copyIp)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopyIp(copyIp);
+                            }}
                             className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition active:scale-95 cursor-pointer"
                             title="Copy IP Address"
                           >
@@ -306,6 +338,142 @@ export default function LoginLogs() {
           </div>
         )}
       </div>
+    {/* User Logs Modal */}
+      {logsUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl border border-slate-200/60 p-6 sm:p-8 w-full max-w-4xl shadow-2xl relative animate-fade-in-up flex flex-col max-h-[85vh]" style={{ animationDuration: '0.25s' }}>
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Login History</h2>
+                <p className="text-sm text-slate-500 mt-0.5">
+                  Showing logs for <span className="font-semibold text-indigo-600">{logsUser.name}</span> (@{logsUser.username})
+                </p>
+              </div>
+              <button
+                onClick={() => setLogsUser(null)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto">
+              {loadingLogs ? (
+                <div className="py-12 flex flex-col items-center justify-center gap-2">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+                  <p className="text-sm font-medium text-slate-500">Loading user logs...</p>
+                </div>
+              ) : logsError ? (
+                <div className="p-6 text-center text-sm text-rose-600 font-semibold">{logsError}</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border-collapse text-left">
+                    <thead>
+                      <tr className="border-b border-slate-100 bg-slate-50/50 text-slate-400 text-[11px] uppercase tracking-wider font-bold text-left">
+                        <th className="px-4 py-3 font-bold">IP Address</th>
+                        <th className="px-4 py-3 font-bold">Time & Date</th>
+                        <th className="px-4 py-3 font-bold">Device & Browser</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {userLogs.map((log) => {
+                        const rawIp = log.ip || "unknown";
+                        const displayIp = (rawIp === "::1" || rawIp === "::ffff:127.0.0.1") ? "127.0.0.1 (Localhost)" : rawIp;
+                        const copyIp = (rawIp === "::1" || rawIp === "::ffff:127.0.0.1") ? "127.0.0.1" : rawIp;
+
+                        const dateStr = log.createdAt
+                          ? new Date(log.createdAt).toLocaleDateString("en-GB", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            })
+                          : "—";
+
+                        const timeStr = log.createdAt
+                          ? new Date(log.createdAt).toLocaleTimeString("en-GB", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              second: "2-digit",
+                            })
+                          : "";
+
+                        return (
+                          <tr key={log._id || log.id} className="border-b border-slate-100 hover:bg-slate-50/30 transition-colors">
+                            {/* IP */}
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-mono text-slate-700 bg-slate-50 border border-slate-100 rounded-lg px-2 py-0.5 text-xs select-all">
+                                  {displayIp}
+                                </span>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCopyIp(copyIp);
+                                  }}
+                                  className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                                  title="Copy IP Address"
+                                >
+                                  {copiedIp === copyIp ? (
+                                    <span className="text-[10px] text-emerald-600 font-bold">Copied</span>
+                                  ) : (
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m-6 4h6m-3-3v6" />
+                                    </svg>
+                                  )}
+                                </button>
+                              </div>
+                            </td>
+                            
+                            {/* Time */}
+                            <td className="px-4 py-3 text-slate-700 font-medium">
+                              <div>{dateStr}</div>
+                              {timeStr && <div className="text-[11px] text-slate-400 mt-0.5">{timeStr}</div>}
+                            </td>
+
+                            {/* Device */}
+                            <td className="px-4 py-3">
+                              <div className="text-slate-700 font-medium text-[13px]">
+                                {parseUA(log.userAgent)}
+                              </div>
+                              <div className="text-[11px] text-slate-400 truncate max-w-xs mt-0.5" title={log.userAgent}>
+                                {log.userAgent}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+
+                      {userLogs.length === 0 && (
+                        <tr>
+                          <td className="px-4 py-8 text-center text-slate-500 font-medium" colSpan={3}>
+                            No login logs recorded for this user yet.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="border-t border-slate-100 pt-4 mt-4 flex justify-end">
+              <button
+                onClick={() => setLogsUser(null)}
+                className="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }
