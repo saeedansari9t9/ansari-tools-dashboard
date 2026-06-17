@@ -1,6 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getAllUsers, deleteUser, createUser, resetUserPassword, getUserLogs } from "../utils/api";
+import { API, getAllUsers, deleteUser, createUser, resetUserPassword, getUserLogs, unlockUser, lockUser, getAllTools } from "../utils/api";
+import Swal from "sweetalert2";
+import { Lock, LockOpen, Check, Copy, Eye, EyeOff } from "lucide-react";
+import { toast } from "react-hot-toast";
+
+// Reusable Swal toast for quick success/error notifications
+const Toast = Swal.mixin({
+  toast: true,
+  position: "top-end",
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+});
 
 export default function AllUsers() {
   const navigate = useNavigate();
@@ -14,9 +26,39 @@ export default function AllUsers() {
     name: "",
     username: "",
     password: "",
-    role: "user"
+    role: "user",
+    toolSlug: "",
+    expiresAt: ""
   });
   const [adding, setAdding] = useState(false);
+  const [createdUserInfo, setCreatedUserInfo] = useState(null); // stores { username, password }
+  const [showAddUserPass, setShowAddUserPass] = useState(false);
+  const [tools, setTools] = useState([]);
+
+  const getWhatsAppTemplate = (username, password) => {
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+
+    return `🚀 *WELCOME TO ANSARI TOOLS* 🚀
+
+📅 *Activation Date:* ${dateStr}
+🌐 *Access Portal:* 
+https://dash.ansaritools.com/login
+
+👤 *Username:* 
+${username}
+
+🔑 *Password:* 
+${password}
+
+✨ _Thanks for purchasing!_
+~ *Ansari Tools*`;
+  };
+
 
   const [resetUser, setResetUser] = useState(null); // stores { id, username }
   const [resetPassword, setResetPassword] = useState("");
@@ -56,41 +98,83 @@ export default function AllUsers() {
     }
   };
 
+  const loadTools = async () => {
+    try {
+      const res = await getAllTools();
+      const list = res.data?.tools ?? res.data ?? [];
+      setTools(list);
+    } catch (err) {
+      console.error("Failed to load tools:", err);
+    }
+  };
+
   useEffect(() => {
     load();
+    loadTools();
   }, []);
 
   const onDelete = async (id) => {
-    if (!confirm("Delete this user?")) return;
+    const result = await Swal.fire({
+      title: "Delete User?",
+      text: "This action cannot be undone. The user will be permanently removed.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Delete",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#e11d48",
+      cancelButtonColor: "#64748b",
+      reverseButtons: true,
+      borderRadius: "16px",
+    });
+    if (!result.isConfirmed) return;
     try {
       await deleteUser(id);
       setUsers((prev) => prev.filter((u) => (u._id || u.id) !== id));
+      Toast.fire({ icon: "success", title: "User deleted successfully" });
     } catch (e) {
-      alert(e?.response?.data?.message || "Delete failed");
+      Toast.fire({ icon: "error", title: e?.response?.data?.message || "Delete failed" });
     }
   };
 
   const handleAddUser = async (e) => {
     e.preventDefault();
-    if (!newUser.name || !newUser.username || !newUser.password) {
-      alert("Name, username, and password are required");
+    if (!newUser.username || !newUser.password) {
+      Toast.fire({ icon: "warning", title: "Username and password are required" });
       return;
     }
 
     setAdding(true);
     try {
       const res = await createUser({
-        name: newUser.name,
+        name: newUser.name.trim() || newUser.username.trim(),
         username: newUser.username,
         password: newUser.password,
         role: newUser.role
       });
-      alert("✅ User added successfully!");
+      const createdUsername = newUser.username;
+      const createdPassword = newUser.password;
+
+      if (newUser.toolSlug && newUser.expiresAt) {
+        try {
+          await API.post("/admin/assign-tool", {
+            username: createdUsername,
+            toolSlug: newUser.toolSlug,
+            expiresAt: newUser.expiresAt
+          });
+        } catch (assignErr) {
+          console.error("Assign tool failed:", assignErr);
+          toast.error(assignErr.response?.data?.message || "User created, but tool assignment failed.");
+        }
+      }
+
       setUsers((prev) => [res.data.user, ...prev]);
-      setNewUser({ name: "", username: "", password: "", role: "user" });
+      setNewUser({ name: "", username: "", password: "", role: "user", toolSlug: "", expiresAt: "" });
+      setShowAddUserPass(false);
       setModalOpen(false);
+      setCreatedUserInfo({ username: createdUsername, password: createdPassword });
+      toast.success("User created successfully!", { position: "top-center" });
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to add user");
+      Toast.fire({ icon: "error", title: err.response?.data?.message || "Failed to add user" });
     } finally {
       setAdding(false);
     }
@@ -99,20 +183,64 @@ export default function AllUsers() {
   const handleResetPassword = async (e) => {
     e.preventDefault();
     if (!resetPassword) {
-      alert("Password is required");
+      Toast.fire({ icon: "warning", title: "Password is required" });
       return;
     }
 
     setResetting(true);
     try {
       await resetUserPassword(resetUser.id, { password: resetPassword });
-      alert("✅ Password reset successfully!");
       setResetPassword("");
       setResetUser(null);
+      Toast.fire({ icon: "success", title: "Password reset successfully!" });
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to reset password");
+      Toast.fire({ icon: "error", title: err.response?.data?.message || "Failed to reset password" });
     } finally {
       setResetting(false);
+    }
+  };
+
+  const handleUnlock = async (id, username) => {
+    const result = await Swal.fire({
+      title: `Unlock @${username}?`,
+      text: "They will be able to log in again from any device.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Unlock",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#059669",
+      cancelButtonColor: "#64748b",
+      reverseButtons: true,
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await unlockUser(id);
+      setUsers(prev => prev.map(u => (u._id || u.id) === id ? { ...u, isLocked: false, lockReason: null } : u));
+      Toast.fire({ icon: "success", title: `@${username} has been unlocked` });
+    } catch (err) {
+      Toast.fire({ icon: "error", title: err.response?.data?.message || "Failed to unlock account" });
+    }
+  };
+
+  const handleLock = async (id, username) => {
+    const result = await Swal.fire({
+      title: `Lock @${username}?`,
+      html: `<p style="color:#64748b;font-size:14px">They will <b>not</b> be able to log in until an admin unlocks their account.</p>`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Lock Account",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#d97706",
+      cancelButtonColor: "#64748b",
+      reverseButtons: true,
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await lockUser(id, "Manually locked by administrator.");
+      setUsers(prev => prev.map(u => (u._id || u.id) === id ? { ...u, isLocked: true } : u));
+      Toast.fire({ icon: "success", title: `@${username}'s account has been locked` });
+    } catch (err) {
+      Toast.fire({ icon: "error", title: err.response?.data?.message || "Failed to lock account" });
     }
   };
 
@@ -213,6 +341,7 @@ export default function AllUsers() {
                   <th className="text-left px-6 py-4.5 font-bold">Name</th>
                   <th className="text-left px-6 py-4.5 font-bold">Username</th>
                   <th className="text-left px-6 py-4.5 font-bold">Role</th>
+                  <th className="text-left px-6 py-4.5 font-bold">Status</th>
                   <th className="text-left px-6 py-4.5 font-bold">Created</th>
                   <th className="text-right px-6 py-4.5 font-bold">Actions</th>
                 </tr>
@@ -258,6 +387,22 @@ export default function AllUsers() {
                           {role}
                         </span>
                       </td>
+                      {/* Lock Status */}
+                      <td className="px-6 py-4">
+                        {u.isLocked ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 border border-rose-100 px-2.5 py-1 text-[11px] font-bold text-rose-600">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                            Locked
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-600">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                            Active
+                          </span>
+                        )}
+                      </td>
                       <td className="px-6 py-4">
                         <div className="font-semibold text-slate-800 text-[13px]">{formattedDate}</div>
                         {formattedDay && (
@@ -265,23 +410,44 @@ export default function AllUsers() {
                         )}
                       </td>
 
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2">
+                      <td className="px-6 py-4 text-right whitespace-nowrap">
+                        <div className="flex justify-end items-center gap-1.5 flex-nowrap">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setLogsUser(u);
                             }}
-                            className="h-8 px-4 rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 font-semibold text-xs transition active:scale-95 cursor-pointer"
+                            className="h-8 px-3 rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 font-semibold text-xs transition active:scale-95 cursor-pointer"
                           >
                             Logs
                           </button>
+                          {u.isLocked ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUnlock(id, username);
+                              }}
+                              className="h-8 px-3 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-semibold text-xs transition active:scale-95 cursor-pointer inline-flex items-center gap-1.5"
+                            >
+                              <LockOpen className="w-3.5 h-3.5" /> Unlock
+                            </button>
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleLock(id, username);
+                              }}
+                              className="h-8 px-3 rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100 font-semibold text-xs transition active:scale-95 cursor-pointer inline-flex items-center gap-1.5"
+                            >
+                              <Lock className="w-3.5 h-3.5" /> Lock
+                            </button>
+                          )}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setResetUser({ id, username });
                             }}
-                            className="h-8 px-4 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100/70 font-semibold text-xs transition active:scale-95 cursor-pointer"
+                            className="h-8 px-3 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100/70 font-semibold text-xs transition active:scale-95 cursor-pointer"
                           >
                             Reset Pass
                           </button>
@@ -290,7 +456,7 @@ export default function AllUsers() {
                               e.stopPropagation();
                               onDelete(id);
                             }}
-                            className="h-8 px-4 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100/70 font-semibold text-xs transition active:scale-95 cursor-pointer"
+                            className="h-8 px-3 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100/70 font-semibold text-xs transition active:scale-95 cursor-pointer"
                           >
                             Delete
                           </button>
@@ -328,8 +494,7 @@ export default function AllUsers() {
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Full Name</label>
                 <input
                   type="text"
-                  required
-                  placeholder="e.g. John Doe"
+                  placeholder="e.g. John Doe (Optional)"
                   className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 outline-none transition-all duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 text-slate-800 text-sm"
                   value={newUser.name}
                   onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
@@ -350,20 +515,68 @@ export default function AllUsers() {
 
               <div>
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Password</label>
-                <input
-                  type="password"
-                  required
-                  placeholder="Create password"
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 outline-none transition-all duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 text-slate-800 text-sm"
-                  value={newUser.password}
-                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                />
+                <div className="relative mt-1">
+                  <input
+                    type={showAddUserPass ? "text" : "password"}
+                    required
+                    placeholder="Create password"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-4 pr-12 py-2.5 outline-none transition-all duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 text-slate-800 text-sm"
+                    value={newUser.password}
+                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAddUserPass(!showAddUserPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1.5 rounded-lg transition active:scale-95 cursor-pointer"
+                    title={showAddUserPass ? "Hide password" : "Show password"}
+                  >
+                    {showAddUserPass ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Optional Tool Assignment */}
+              <div className="border-t border-slate-100 pt-4 mt-4 space-y-4">
+                <h3 className="text-sm font-semibold text-slate-800">Assign Subscription Tool (Optional)</h3>
+                
+                <div>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Select Tool</label>
+                  <select
+                    className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 outline-none transition-all duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 text-slate-800 text-sm cursor-pointer"
+                    value={newUser.toolSlug}
+                    onChange={(e) => setNewUser({ ...newUser, toolSlug: e.target.value })}
+                  >
+                    <option value="">— None (No Tool Assigned) —</option>
+                    {tools.map((t) => (
+                      <option key={t.slug} value={t.slug}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {newUser.toolSlug && (
+                  <div className="animate-fade-in">
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Expiry Date</label>
+                    <input
+                      type="date"
+                      required={!!newUser.toolSlug}
+                      className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 outline-none transition-all duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 text-slate-800 text-sm"
+                      value={newUser.expiresAt}
+                      onChange={(e) => setNewUser({ ...newUser, expiresAt: e.target.value })}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 mt-6">
                 <button
                   type="button"
-                  onClick={() => setModalOpen(false)}
+                  onClick={() => {
+                    setModalOpen(false);
+                    setShowAddUserPass(false);
+                    setNewUser({ name: "", username: "", password: "", role: "user", toolSlug: "", expiresAt: "" });
+                  }}
                   className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 transition active:scale-95 cursor-pointer"
                 >
                   Cancel
@@ -377,6 +590,58 @@ export default function AllUsers() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* User Created Success Modal with WhatsApp Copy Text */}
+      {createdUserInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl border border-slate-200/60 p-6 sm:p-8 w-full max-w-md shadow-2xl relative animate-fade-in-up flex flex-col items-center" style={{ animationDuration: '0.25s' }}>
+            
+            {/* Green Check Animation Icon */}
+            <div className="h-16 w-16 bg-emerald-50 border border-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mb-4 animate-bounce" style={{ animationIterationCount: 1, animationDuration: '1s' }}>
+              <Check className="w-8 h-8 stroke-[3]" />
+            </div>
+
+            <h2 className="text-xl font-bold text-slate-900 text-center">User Created Successfully!</h2>
+            <p className="text-sm text-slate-500 mt-1 text-center">
+              Here is the formatted WhatsApp message for your client.
+            </p>
+
+            {/* Template Display Box */}
+            <div className="mt-5 w-full relative group">
+              <pre className="w-full h-48 bg-slate-950 text-slate-200 font-mono text-xs rounded-2xl p-4 select-all outline-none overflow-y-auto border border-slate-800 text-left whitespace-pre-wrap leading-relaxed shadow-inner">
+                {getWhatsAppTemplate(createdUserInfo.username, createdUserInfo.password)}
+              </pre>
+            </div>
+
+            {/* Actions */}
+            <div className="w-full mt-6 space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const text = getWhatsAppTemplate(createdUserInfo.username, createdUserInfo.password);
+                  navigator.clipboard.writeText(text);
+                  toast.success("WhatsApp message copied to clipboard!", {
+                    duration: 3000,
+                    position: "top-center"
+                  });
+                }}
+                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-md shadow-emerald-600/10 hover:shadow-emerald-700/20 transition-all duration-200 active:scale-[0.98] cursor-pointer"
+              >
+                <Copy className="w-4 h-4" /> Copy WhatsApp Message
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setCreatedUserInfo(null)}
+                className="w-full py-3 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-semibold transition duration-200 active:scale-[0.98] cursor-pointer text-center"
+              >
+                Done
+              </button>
+            </div>
+
           </div>
         </div>
       )}

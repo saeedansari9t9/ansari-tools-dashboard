@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createTool, deleteTool, getAllTools, updateTool } from "../utils/api";
+import Swal from "sweetalert2";
+import { toast } from "react-hot-toast";
 
 export default function AllTools() {
   const [loading, setLoading] = useState(true);
@@ -52,7 +54,10 @@ export default function AllTools() {
 
   const onCreate = async (e) => {
     e.preventDefault();
-    if (!name.trim()) return alert("Tool name required");
+    if (!name.trim()) {
+      toast.error("Tool name is required.");
+      return;
+    }
     try {
       const res = await createTool({
         name: name.trim(),
@@ -68,18 +73,37 @@ export default function AllTools() {
       setSlug("");
       setAccessUrl("");
       setImage("");
+      toast.success("Tool created successfully!");
     } catch (e2) {
-      alert(e2?.response?.data?.message || "Create failed");
+      toast.error(e2?.response?.data?.message || "Create failed");
     }
   };
 
   const onDelete = async (id) => {
-    if (!confirm("Delete this tool?")) return;
+    const result = await Swal.fire({
+      title: "Delete Tool?",
+      text: "Are you sure you want to delete this tool?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Delete",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#e11d48",
+      cancelButtonColor: "#4f46e5",
+      customClass: {
+        popup: "rounded-3xl border border-slate-200/50 shadow-xl",
+        title: "font-bold text-slate-800",
+        confirmButton: "rounded-xl font-bold px-5 py-2.5 text-sm cursor-pointer",
+        cancelButton: "rounded-xl font-bold px-5 py-2.5 text-sm cursor-pointer",
+      }
+    });
+    if (!result.isConfirmed) return;
+
     try {
       await deleteTool(id);
       setTools((prev) => prev.filter((t) => (t._id || t.id) !== id));
+      toast.success("Tool has been deleted successfully.");
     } catch (e) {
-      alert(e?.response?.data?.message || "Delete failed");
+      toast.error(e?.response?.data?.message || "Delete failed");
     }
   };
 
@@ -104,8 +128,9 @@ export default function AllTools() {
       const updated = res.data?.tool ?? res.data?.updatedTool ?? res.data;
       setTools((prev) => prev.map((t) => ((t._id || t.id) === id ? updated : t)));
       setEditing(null);
+      toast.success("Tool updated successfully!");
     } catch (e) {
-      alert(e?.response?.data?.message || "Update failed");
+      toast.error(e?.response?.data?.message || "Update failed");
     }
   };
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { signupUser } from "../utils/api";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export default function Signup() {
       // ✅ REDIRECT TO DASHBOARD
       navigate("/dashboard");
     } catch (err) {
-      alert(err.response?.data?.message || "Signup failed");
+      toast.error(err.response?.data?.message || "Signup failed");
     } finally {
       setLoading(false);
     }

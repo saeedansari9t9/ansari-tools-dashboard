@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getMyTools, getToolCookies, getTutorial, API } from "../utils/api";
-import { ArrowLeft, CheckCircle, Download, AlertTriangle, Play, HelpCircle, ShieldCheck, Cpu, Database, Clock, Key } from "lucide-react";
+import { ArrowLeft, CheckCircle, Download, AlertTriangle, Play, HelpCircle, ShieldCheck, Cpu, Database, Clock, Key, PlayCircle } from "lucide-react";
+import Swal from "sweetalert2";
+import { toast } from "react-hot-toast";
 
 export default function ToolDetails() {
   const { slug } = useParams();
@@ -81,14 +83,11 @@ export default function ToolDetails() {
     try {
       setFetchingCookies(true);
       const cleanToolName = tool.slug.toLowerCase().replace(/\s+/g, "");
-      console.log(`[ToolDetails] Requesting cookies for tool: ${cleanToolName}`);
       const res = await getToolCookies(cleanToolName);
       const cookiesList = res.data?.cookies || [];
 
       if (cookiesList.length === 0) {
-        alert(
-          "⚠️ No active session cookies found for this tool in the database. Please ask the Admin to update them on the 'Manage Cookies' page!"
-        );
+        toast.error("No active session found for this tool. Please ask the Admin to update it.");
         return;
       }
 
@@ -97,8 +96,6 @@ export default function ToolDetails() {
         {
           type: "AI_TOOL_ACCESS",
           tool: cleanToolName,
-          email: "shared-user@ansaritools.com",
-          password: "password123",
           url: tool.accessUrl,
           cookies: cookiesList,
         },
@@ -106,10 +103,7 @@ export default function ToolDetails() {
       );
     } catch (err) {
       console.error("Failed to access tool:", err);
-      alert(
-        err.response?.data?.message ||
-          "Failed to fetch session. Please verify server connection."
-      );
+      toast.error(err.response?.data?.message || "Failed to fetch session. Please verify server connection.");
     } finally {
       setFetchingCookies(false);
     }
@@ -117,15 +111,30 @@ export default function ToolDetails() {
 
   const handleDownloadExtension = () => {
     if (!extensionFileUrl) {
-      alert("⚠️ No extension file has been uploaded by the Admin yet. Please ask the Admin to upload it!");
+      toast.error("No extension file has been uploaded by the Admin yet. Please ask the Admin to upload it!");
       return;
     }
 
-    const apiBase = API.defaults.baseURL;
-    const hostBase = apiBase.replace(/\/api$/, "");
-    const downloadUrl = extensionFileUrl.startsWith("http")
-      ? extensionFileUrl
-      : `${hostBase}${extensionFileUrl}`;
+    let downloadUrl = extensionFileUrl;
+
+    // Auto-convert Google Drive links to direct download links
+    if (downloadUrl.includes("drive.google.com")) {
+      const driveMatch = downloadUrl.match(/\/file\/d\/([^/]+)/);
+      if (driveMatch && driveMatch[1]) {
+        const fileId = driveMatch[1].split(/[?#]/)[0];
+        downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+      } else {
+        const idMatch = downloadUrl.match(/[?&]id=([^&]+)/);
+        if (idMatch && idMatch[1]) {
+          const fileId = idMatch[1].split(/[?#]/)[0];
+          downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+        }
+      }
+    } else if (!downloadUrl.startsWith("http")) {
+      const apiBase = API.defaults.baseURL;
+      const hostBase = apiBase.replace(/\/api$/, "");
+      downloadUrl = `${hostBase}${downloadUrl}`;
+    }
 
     window.open(downloadUrl, "_blank");
 
@@ -173,7 +182,7 @@ export default function ToolDetails() {
       <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-indigo-200/30 rounded-full blur-3xl -z-10 animate-pulse"></div>
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl -z-10 animate-pulse duration-5000"></div>
 
-      <div className="max-w-4xl mx-auto space-y-6 relative">
+      <div className="max-w-5xl space-y-6 relative">
         {/* Back Link */}
         <Link
           to="/dashboard"
@@ -188,10 +197,10 @@ export default function ToolDetails() {
             {/* Tool Image */}
             <div className="md:col-span-2 p-8 flex items-center justify-center bg-gradient-to-br from-indigo-50/40 via-slate-50 to-purple-50/20 relative border-b md:border-b-0 md:border-r border-slate-100">
               <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808006_1px,transparent_1px),linear-gradient(to_bottom,#80808006_1px,transparent_1px)] bg-[size:14px_24px]"></div>
-              
+
               <div className="relative group/logo">
                 <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 opacity-15 blur-xl group-hover/logo:opacity-30 transition-opacity duration-300"></div>
-                
+
                 <div className="relative w-40 h-40 md:w-48 md:h-48 rounded-full border-2 border-white shadow-[0_8px_30px_rgba(0,0,0,0.05)] overflow-hidden bg-white hover:scale-105 transition-all duration-300 ease-out flex items-center justify-center">
                   <img
                     src={tool.image}
@@ -221,10 +230,6 @@ export default function ToolDetails() {
                 <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-none bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 bg-clip-text">
                   {tool.name}
                 </h1>
-                
-                <p className="text-sm text-slate-500 leading-relaxed">
-                  {tool.description || "Access premium features of this tool instantly through secure cookie-injection protocol."}
-                </p>
 
                 {/* Expiry Details */}
                 <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl p-4 mt-2">
@@ -250,23 +255,32 @@ export default function ToolDetails() {
                   <button
                     onClick={handleAccessTool}
                     disabled={fetchingCookies}
-                    className="w-full sm:w-auto relative group inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 active:scale-[0.99] disabled:opacity-60 text-white font-bold py-4 px-10 shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/35 transition-all duration-300 cursor-pointer text-[15px]"
+                    className="w-full sm:w-auto relative group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 active:scale-[0.99] disabled:opacity-60 text-white font-semibold py-2.5 px-6 shadow-md shadow-indigo-600/15 transition-all duration-300 cursor-pointer text-sm"
                   >
-                    <Play className="w-4.5 h-4.5 fill-current" />
+                    <Play className="w-4 h-4 fill-current" />
                     {fetchingCookies ? "Launching Session..." : `Launch ${tool.name}`}
                   </button>
                 ) : (
                   <div className="space-y-4">
-                    <button
-                      onClick={handleDownloadExtension}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-[0.99] text-white font-bold py-4 px-10 shadow-lg shadow-amber-500/20 transition-all duration-200 cursor-pointer text-[15px]"
-                    >
-                      <Download className="w-4.5 h-4.5" />
-                      Install Extension to Access
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <button
+                        onClick={handleDownloadExtension}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-[0.99] text-white font-semibold py-2.5 px-6 shadow-md shadow-amber-500/15 transition-all duration-200 cursor-pointer text-sm"
+                      >
+                        <Download className="w-4 h-4" />
+                        Install Extension to Access
+                      </button>
+                      <button
+                        onClick={() => navigate("/tutorials")}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-white border border-slate-200/85 hover:bg-slate-50 active:scale-[0.99] text-slate-700 hover:text-slate-900 font-semibold py-2.5 px-6 shadow-sm transition-all duration-200 cursor-pointer text-sm"
+                      >
+                        <PlayCircle className="w-4 h-4 text-indigo-600" />
+                        Extension Tutorial
+                      </button>
+                    </div>
                     <p className="text-xs text-amber-600 font-semibold flex items-center gap-2 bg-amber-50/50 border border-amber-100 rounded-xl p-3 max-w-md">
-                      <AlertTriangle className="w-4.5 h-4.5 shrink-0 text-amber-500" />
-                      The Chrome extension is required to handle automated secure session cookie injection.
+                      <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500" />
+                      The Chrome extension is required to access this tool.
                     </p>
                   </div>
                 )}
@@ -280,89 +294,62 @@ export default function ToolDetails() {
         {!isExtensionInstalled && (
           <div
             id="install-instructions"
-            className="bg-white rounded-3xl border border-slate-200/60 p-8 shadow-[0_4px_25px_rgba(99,102,241,0.03)] space-y-8 scroll-mt-6 relative overflow-hidden"
+            className="bg-white rounded-3xl border border-slate-200/60 p-6 shadow-[0_4px_25px_rgba(99,102,241,0.02)] space-y-5 scroll-mt-6 relative overflow-hidden"
           >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/50 rounded-full blur-2xl -z-10"></div>
-            
-            <div className="border-b border-slate-100 pb-5">
-              <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2.5">
-                <HelpCircle className="w-6 h-6 text-indigo-600" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/30 rounded-full blur-2xl -z-10"></div>
+
+            <div className="border-b border-slate-100 pb-4">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <HelpCircle className="w-5.5 h-5.5 text-indigo-600" />
                 Ansari Tools Extension Setup Guide
               </h3>
-              <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
-                Follow this simple step-by-step setup to enable automatic one-click premium logins on your Chrome browser.
-              </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Step 1 */}
-              <div className="group/step flex gap-5 items-start p-5 rounded-2xl border border-slate-100 bg-slate-50/40 hover:bg-white hover:border-slate-200/80 hover:shadow-md hover:shadow-indigo-600/[0.02] transition duration-200">
-                <div className="h-10 w-10 rounded-xl bg-indigo-50 border border-indigo-100/50 flex items-center justify-center font-extrabold text-indigo-600 text-sm shrink-0 shadow-sm group-hover/step:bg-indigo-600 group-hover/step:text-white group-hover/step:border-indigo-600 transition duration-200">
+            <ol className="space-y-3.5 text-[13px] text-slate-600">
+              <li className="flex gap-3 items-start">
+                <div className="h-5.5 w-5.5 rounded-lg bg-indigo-50 border border-indigo-100/60 flex items-center justify-center font-bold text-[11px] text-indigo-600 shrink-0 mt-0.5">
                   1
                 </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 text-sm">Locate Extension Folder</h4>
-                  <p className="text-xs text-slate-500 leading-relaxed mt-1.5">
-                    Locate the <strong>AnsariTools</strong> folder on your machine (usually inside the main dashboard directory).
-                  </p>
+                <div className="leading-relaxed">
+                  Download the extension ZIP file by clicking the <strong className="text-slate-800 font-semibold">Install Extension</strong> button above.
                 </div>
-              </div>
-
-              {/* Step 2 */}
-              <div className="group/step flex gap-5 items-start p-5 rounded-2xl border border-slate-100 bg-slate-50/40 hover:bg-white hover:border-slate-200/80 hover:shadow-md hover:shadow-indigo-600/[0.02] transition duration-200">
-                <div className="h-10 w-10 rounded-xl bg-indigo-50 border border-indigo-100/50 flex items-center justify-center font-extrabold text-indigo-600 text-sm shrink-0 shadow-sm group-hover/step:bg-indigo-600 group-hover/step:text-white group-hover/step:border-indigo-600 transition duration-200">
+              </li>
+              <li className="flex gap-3 items-start">
+                <div className="h-5.5 w-5.5 rounded-lg bg-indigo-50 border border-indigo-100/60 flex items-center justify-center font-bold text-[11px] text-indigo-600 shrink-0 mt-0.5">
                   2
                 </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 text-sm">Open Extension Settings</h4>
-                  <p className="text-xs text-slate-500 leading-relaxed mt-1.5">
-                    Open a new Google Chrome tab and navigate to:{" "}
-                    <code className="bg-slate-100 text-rose-600 px-2 py-0.5 rounded text-[11px] font-mono select-all font-semibold border border-slate-200/40 mt-1 block w-max">
-                      chrome://extensions/
-                    </code>
-                  </p>
+                <div className="leading-relaxed">
+                  Open a new Google Chrome tab and navigate to:{" "}
+                  <code className="inline-block bg-slate-100 text-rose-600 px-2 py-0.5 rounded text-[11px] font-mono select-all font-semibold border border-slate-200/40">
+                    chrome://extensions/
+                  </code>
                 </div>
-              </div>
-
-              {/* Step 3 */}
-              <div className="group/step flex gap-5 items-start p-5 rounded-2xl border border-slate-100 bg-slate-50/40 hover:bg-white hover:border-slate-200/80 hover:shadow-md hover:shadow-indigo-600/[0.02] transition duration-200">
-                <div className="h-10 w-10 rounded-xl bg-indigo-50 border border-indigo-100/50 flex items-center justify-center font-extrabold text-indigo-600 text-sm shrink-0 shadow-sm group-hover/step:bg-indigo-600 group-hover/step:text-white group-hover/step:border-indigo-600 transition duration-200">
+              </li>
+              <li className="flex gap-3 items-start">
+                <div className="h-5.5 w-5.5 rounded-lg bg-indigo-50 border border-indigo-100/60 flex items-center justify-center font-bold text-[11px] text-indigo-600 shrink-0 mt-0.5">
                   3
                 </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 text-sm">Enable Developer Mode</h4>
-                  <p className="text-xs text-slate-500 leading-relaxed mt-1.5">
-                    Toggle the <strong>Developer Mode</strong> switch at the top-right corner of the Extensions page.
-                  </p>
+                <div className="leading-relaxed">
+                  Toggle the <strong className="text-slate-800 font-semibold">Developer Mode</strong> switch at the top-right corner of the Extensions page.
                 </div>
-              </div>
-
-              {/* Step 4 */}
-              <div className="group/step flex gap-5 items-start p-5 rounded-2xl border border-slate-100 bg-slate-50/40 hover:bg-white hover:border-slate-200/80 hover:shadow-md hover:shadow-indigo-600/[0.02] transition duration-200">
-                <div className="h-10 w-10 rounded-xl bg-indigo-50 border border-indigo-100/50 flex items-center justify-center font-extrabold text-indigo-600 text-sm shrink-0 shadow-sm group-hover/step:bg-indigo-600 group-hover/step:text-white group-hover/step:border-indigo-600 transition duration-200">
+              </li>
+              <li className="flex gap-3 items-start">
+                <div className="h-5.5 w-5.5 rounded-lg bg-indigo-50 border border-indigo-100/60 flex items-center justify-center font-bold text-[11px] text-indigo-600 shrink-0 mt-0.5">
                   4
                 </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 text-sm">Load Unpacked Extension</h4>
-                  <p className="text-xs text-slate-500 leading-relaxed mt-1.5">
-                    Click <strong>Load unpacked</strong> on the top-left, and select the <strong>AnsariTools</strong> folder.
-                  </p>
+                <div className="leading-relaxed">
+                  Extract the downloaded ZIP file and click <strong className="text-slate-800 font-semibold">Load unpacked</strong> at the top-left to select the folder, or simply drag and drop the ZIP file directly onto the Extensions page.
                 </div>
-              </div>
-            </div>
-
-            {/* Step 5 Banner */}
-            <div className="rounded-2xl bg-indigo-50/50 border border-indigo-100 p-5 flex gap-4.5 items-start">
-              <div className="h-9 w-9 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white text-sm shrink-0 shadow-sm shadow-indigo-600/10">
-                5
-              </div>
-              <div className="space-y-1">
-                <h4 className="font-bold text-indigo-950 text-sm">Refresh & Go!</h4>
-                <p className="text-xs text-indigo-700/90 leading-relaxed">
-                  Once installed, return to this page and refresh. The system will auto-detect the bridge and launch the tool with secure, passwordless authentication!
-                </p>
-              </div>
-            </div>
+              </li>
+              <li className="flex gap-3 items-start">
+                <div className="h-5.5 w-5.5 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-[11px] text-white shrink-0 mt-0.5 shadow-sm shadow-indigo-600/10">
+                  5
+                </div>
+                <div className="leading-relaxed font-semibold text-slate-800">
+                  Once done, return to this page and refresh. The access button will appear to let you launch the tool!
+                </div>
+              </li>
+            </ol>
           </div>
         )}
       </div>

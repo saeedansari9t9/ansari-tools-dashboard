@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { getMe, getMyTools } from "../utils/api";
 import { User, Clock, CheckCircle, AlertTriangle, ExternalLink, Calendar, ShieldCheck, Sparkles, CreditCard } from "lucide-react";
 
+const capitalize = (str) => str ? str.replace(/\b\w/g, c => c.toUpperCase()) : "";
+
 export default function PlanInfo() {
   const [user, setUser] = useState(null);
   const [tools, setTools] = useState([]);
@@ -51,7 +53,7 @@ export default function PlanInfo() {
       <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-indigo-200/20 rounded-full blur-3xl -z-10 animate-pulse"></div>
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-200/15 rounded-full blur-3xl -z-10 animate-pulse duration-5000"></div>
 
-      <div className="max-w-4xl mx-auto space-y-6 relative">
+      <div className="max-w-5xl space-y-6 relative">
         {/* Title Header */}
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm">
@@ -73,7 +75,7 @@ export default function PlanInfo() {
                   {(user?.name || user?.username || "U").charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900 leading-tight">{user?.name}</h2>
+                  <h2 className="text-lg font-bold text-slate-900 leading-tight">{capitalize(user?.name || user?.username || "User")}</h2>
                   <div className="text-xs text-slate-400 font-medium">@{user?.username}</div>
                 </div>
               </div>

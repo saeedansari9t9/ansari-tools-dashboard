@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { loginUser } from "../utils/api";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import logo from "../assets/images/logo.png";
 
 export default function Login() {
@@ -9,12 +9,18 @@ export default function Login() {
   const [showPass, setShowPass] = useState(false);
   const nav = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [searchParams] = useSearchParams();
+
+  // Show locked banner if redirected with ?locked=1
+  const isLockedRedirect = searchParams.get("locked") === "1";
 
   const submit = async (e) => {
     e?.preventDefault();
+    setError("");
 
     if (!username || !password) {
-      alert("Please enter username and password");
+      setError("Please enter username and password");
       return;
     }
 
@@ -22,10 +28,11 @@ export default function Login() {
       setLoading(true);
       const res = await loginUser({ username, password });
       localStorage.setItem("token", res.data.token);
-      localStorage.setItem("role", res.data.user.role); //Temporary
+      localStorage.setItem("role", res.data.user.role);
       nav("/dashboard");
     } catch (err) {
-      alert(err.response?.data?.message || "Invalid credentials");
+      const msg = err.response?.data?.message || "Invalid credentials";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -56,6 +63,30 @@ export default function Login() {
             </h1>
             <p className="text-slate-500 text-sm mt-1.5 font-medium">Dashboard Login</p>
           </div>
+
+          {/* Locked Account Banner */}
+          {isLockedRedirect && (
+            <div className="mb-6 rounded-2xl bg-rose-50 border border-rose-200 p-4 flex gap-3">
+              <div className="shrink-0 mt-0.5">
+                <svg className="w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-rose-700">Account Locked</p>
+                <p className="text-xs text-rose-600 mt-0.5 leading-relaxed">
+                  Your account was locked due to login from multiple devices. Please contact the administrator to unlock your account.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Inline error */}
+          {error && !isLockedRedirect && (
+            <div className="mb-5 rounded-2xl bg-rose-50 border border-rose-100 px-4 py-3 text-sm text-rose-600 font-semibold">
+              {error}
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={submit} className="space-y-5">

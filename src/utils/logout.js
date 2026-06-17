@@ -1,12 +1,24 @@
-import { API } from "./api";
+import { API, logoutUser } from "./api";
 
 export const logoutAll = async () => {
-  try {
-    await API.post("/logout", {}, { withCredentials: true });
-  } catch (e) {
-    // ignore
-  } finally {
-    localStorage.clear();
-    sessionStorage.clear();
+  const role = localStorage.getItem("role");
+
+  if (role === "admin") {
+    try {
+      // Also clear admin cookie
+      await API.post("/admins/logout", {}, { withCredentials: true });
+    } catch (e) {
+      // ignore
+    }
+  } else {
+    try {
+      // ✅ Clear sessionToken on server so user can login fresh on next visit
+      await logoutUser();
+    } catch (e) {
+      // ignore network errors during logout
+    }
   }
+
+  localStorage.clear();
+  sessionStorage.clear();
 };

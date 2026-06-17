@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMe, getMyTools, getToolCookies, getUsersWithTools } from "../utils/api";
+import { Sparkles } from "lucide-react";
+import Swal from "sweetalert2";
+import { toast } from "react-hot-toast";
+
+const capitalize = (str) => str ? str.replace(/\b\w/g, c => c.toUpperCase()) : "";
 
 export default function Dashboard({ role }) {
   const navigate = useNavigate();
@@ -89,22 +94,19 @@ export default function Dashboard({ role }) {
     try {
       const cleanToolName = toolName.toLowerCase().replace(/\s+/g, '');
       
-      console.log(`[Dashboard] Requesting cookies for tool: ${cleanToolName}`);
       const res = await getToolCookies(cleanToolName);
       const cookiesList = res.data?.cookies || [];
 
       if (cookiesList.length === 0) {
-        alert("⚠️ No active session cookies found for this tool in the database. Please ask the Admin to update them on the 'Manage Cookies' page!");
+        toast.error("No active session found for this tool. Please ask the Admin to update it.");
         return;
       }
 
-      // Send postMessage to the old chrome-extension bridge
+      // Send postMessage to the chrome-extension bridge
       window.postMessage(
         {
           type: "AI_TOOL_ACCESS",
           tool: cleanToolName,
-          email: "shared-user@ansaritools.com",
-          password: "password123",
           url: toolUrl,
           cookies: cookiesList,
         },
@@ -113,7 +115,7 @@ export default function Dashboard({ role }) {
       
     } catch (err) {
       console.error("Failed to access tool:", err);
-      alert(err.response?.data?.message || "Failed to fetch session. Please verify server connection.");
+      toast.error(err.response?.data?.message || "Failed to fetch session. Please verify server connection.");
     }
   };
 
@@ -142,8 +144,9 @@ export default function Dashboard({ role }) {
         </p>
 
         <div className="mt-5 rounded-2xl bg-white border border-slate-200 p-4 sm:p-5">
-          <div className="text-base sm:text-lg font-semibold text-slate-900">
-            Welcome, {me?.name || me?.username || "User"} 👋
+          <div className="text-base sm:text-lg font-semibold text-slate-900 flex items-center gap-2">
+            Welcome, {capitalize(me?.name || me?.username || "User")}{" "}
+            <Sparkles className="w-5 h-5 text-indigo-500 shrink-0" />
           </div>
           <div className="text-sm text-slate-500 mt-1">
             {isAdmin ? "Track and manage user tool assignments from this dashboard." : "You can access your subscribed tools anytime."}

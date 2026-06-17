@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { API, getAllUsers } from "../utils/api"; // axios instance and helper
+import { toast } from "react-hot-toast";
 
 export default function AssignTool() {
   const [username, setUsername] = useState("");
@@ -63,18 +64,18 @@ export default function AssignTool() {
   const assign = async (e) => {
     e.preventDefault();
     if (!username || !toolSlug || !expiresAt) {
-      alert("username, tool, expiry required");
+      toast.error("Username, tool, and expiry are required.");
       return;
     }
 
     try {
       setLoading(true);
       await API.post("/admin/assign-tool", { username, toolSlug, expiresAt });
-      alert("✅ Assigned successfully");
+      toast.success("Tool assigned successfully!");
       setUsername("");
       setExpiresAt("");
     } catch (err) {
-      alert(err.response?.data?.message || "Assign failed");
+      toast.error(err.response?.data?.message || "Assign failed");
     } finally {
       setLoading(false);
     }
@@ -82,7 +83,7 @@ export default function AssignTool() {
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-6">
-      <div className="max-w-xl mx-auto bg-white border border-slate-200 rounded-2xl p-5">
+      <div className="max-w-3xl bg-white border border-slate-200 rounded-2xl p-5">
         <h1 className="text-xl font-semibold text-slate-900">Assign Tool</h1>
         <p className="text-sm text-slate-500 mt-1">
           Assign a subscription tool to a user by username.

@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { getMe, changePassword, updateProfile } from "../utils/api";
 import { User, Lock, Shield, Eye, EyeOff } from "lucide-react";
 
+const capitalize = (str) => str ? str.replace(/\b\w/g, c => c.toUpperCase()) : "";
+
 export default function Profile({ role }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -124,7 +126,7 @@ export default function Profile({ role }) {
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="max-w-4xl space-y-6">
         {/* Header */}
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
@@ -142,7 +144,7 @@ export default function Profile({ role }) {
               {avatarLetter}
             </div>
             <div className="text-center sm:text-left space-y-1">
-              <h2 className="text-xl font-bold text-slate-900">{user?.name || "User Name"}</h2>
+              <h2 className="text-xl font-bold text-slate-900">{capitalize(user?.name || "User Name")}</h2>
               <p className="text-sm font-medium text-slate-500">@{user?.username || "username"}</p>
               <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600">
                 <Shield className="w-3.5 h-3.5" />

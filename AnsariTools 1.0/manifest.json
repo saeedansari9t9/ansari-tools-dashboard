@@ -28,6 +28,7 @@
     "*://*.pinggy.link/*",
     "*://*.lhr.life/*",
     "http://localhost:5173/*",
+    "http://localhost:5174/*",
     "http://localhost:3000/*",
     "https://*.ansaritools.com/*",
     "https://ansaritools.com/*",
@@ -128,6 +129,7 @@
         "*://*.pinggy.link/*",
         "*://*.lhr.life/*",
         "http://localhost:5173/*",
+        "http://localhost:5174/*",
         "http://localhost:3000/*",
         "https://*.ansaritools.com/*",
         "https://ansaritools.com/*"

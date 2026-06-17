@@ -16,6 +16,9 @@ import {
 import logo from "../assets/images/logo.png";
 import { logoutAll } from "../utils/logout";
 import { getMe } from "../utils/api";
+import Swal from "sweetalert2";
+
+const capitalize = (str) => str ? str.replace(/\b\w/g, c => c.toUpperCase()) : "";
 
 const navLinkClass = ({ isActive }) =>
   `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
@@ -43,8 +46,28 @@ export default function Sidebar({ isOpen, onClose, role = "user" }) {
   }, []);
 
   const handleLogout = async () => {
-    await logoutAll();
-    window.location.href = "https://dash.ansaritools.com/login";
+    const result = await Swal.fire({
+      title: "Logout?",
+      text: "Are you sure you want to log out of your session?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Logout",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#e11d48", // rose-600
+      cancelButtonColor: "#4f46e5", // indigo-600
+      background: "#ffffff",
+      customClass: {
+        popup: "rounded-3xl border border-slate-200/50 shadow-xl",
+        title: "font-bold text-slate-800",
+        confirmButton: "rounded-xl font-bold px-5 py-2.5 text-sm cursor-pointer",
+        cancelButton: "rounded-xl font-bold px-5 py-2.5 text-sm cursor-pointer",
+      }
+    });
+
+    if (result.isConfirmed) {
+      await logoutAll();
+      window.location.href = "https://dash.ansaritools.com/login";
+    }
   };
 
   const content = (
@@ -171,8 +194,8 @@ export default function Sidebar({ isOpen, onClose, role = "user" }) {
             <User className="w-5 h-5 text-indigo-600" />
           </div>
           <div className="text-left min-w-0 flex-1">
-            <div className="text-sm font-semibold leading-tight text-slate-800 truncate" title={user?.name || user?.username}>
-              {user?.name || user?.username || "Welcome!"}
+            <div className="text-sm font-semibold leading-tight text-slate-800 truncate" title={capitalize(user?.name || user?.username)}>
+              {capitalize(user?.name || user?.username || "Welcome!")}
             </div>
             <div className="text-xs text-slate-400 mt-0.5 truncate">
               @{user?.username || "username"}

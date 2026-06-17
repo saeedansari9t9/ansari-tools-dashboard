@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -20,7 +21,9 @@ import PlanInfo from "./pages/PlanInfo";
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <>
+      <Toaster position="top-center" reverseOrder={false} />
+      <BrowserRouter>
       <Routes>
         {/* PUBLIC ROUTES */}
         <Route path="/" element={<Navigate to="/login" replace />} />
@@ -178,5 +181,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
+    </>
   );
 }
