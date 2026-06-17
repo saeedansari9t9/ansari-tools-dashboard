@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { loginUser } from "../utils/api";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import logo from "../assets/images/logo.png";
+import Swal from "sweetalert2";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -14,6 +15,18 @@ export default function Login() {
 
   // Show locked banner if redirected with ?locked=1
   const isLockedRedirect = searchParams.get("locked") === "1";
+
+  const handleSignupClick = (e) => {
+    e.preventDefault();
+    Swal.fire({
+      title: "Contact Admin",
+      text: "Direct registration is disabled. Please contact the administrator to create your account and obtain a subscription.",
+      icon: "info",
+      confirmButtonText: "Got It",
+      confirmButtonColor: "#4f46e5",
+      borderRadius: "16px"
+    });
+  };
 
   const submit = async (e) => {
     e?.preventDefault();
@@ -153,12 +166,13 @@ export default function Login() {
             <div className="flex items-center justify-between pt-2">
               <p className="text-xs text-slate-500">
                 Don&apos;t have an account?{" "}
-                <Link
-                  to="/signup"
-                  className="text-indigo-600 hover:text-indigo-500 font-semibold transition-colors"
+                <button
+                  type="button"
+                  onClick={handleSignupClick}
+                  className="text-indigo-600 hover:text-indigo-500 font-semibold transition-colors bg-transparent border-none p-0 cursor-pointer inline"
                 >
                   Sign up
-                </Link>
+                </button>
               </p>
               <span className="text-xs text-slate-400 flex items-center gap-1 font-medium">
                 <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
