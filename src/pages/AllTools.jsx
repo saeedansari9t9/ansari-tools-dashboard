@@ -3,9 +3,11 @@ import { createTool, deleteTool, getAllTools, updateTool } from "../utils/api";
 import Swal from "sweetalert2";
 import { toast } from "react-hot-toast";
 
+let cachedAllTools = null;
+
 export default function AllTools() {
-  const [loading, setLoading] = useState(true);
-  const [tools, setTools] = useState([]);
+  const [loading, setLoading] = useState(!cachedAllTools);
+  const [tools, setTools] = useState(cachedAllTools || []);
   const [q, setQ] = useState("");
   const [error, setError] = useState("");
 
@@ -35,11 +37,12 @@ export default function AllTools() {
   }, [tools, q]);
 
   const load = async () => {
-    setLoading(true);
+    if (!cachedAllTools) setLoading(true);
     setError("");
     try {
       const res = await getAllTools();
       const list = res.data?.tools ?? res.data ?? [];
+      cachedAllTools = list;
       setTools(list);
     } catch (e) {
       setError(e?.response?.data?.message || "Failed to load tools");

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API, getAllUsers, deleteUser, createUser, resetUserPassword, getUserLogs, unlockUser, lockUser, getAllTools } from "../utils/api";
+import { API, getAllUsers, deleteUser, createUser, resetUserPassword, getUserLogs, unlockUser, lockUser, getAllTools, clearSession } from "../utils/api";
 import Swal from "sweetalert2";
 import { Lock, LockOpen, Check, Copy, Eye, EyeOff } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -14,10 +14,13 @@ const Toast = Swal.mixin({
   timerProgressBar: true,
 });
 
+let cachedUsers = null;
+let cachedUsersTools = null;
+
 export default function AllUsers() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(!cachedUsers);
+  const [users, setUsers] = useState(cachedUsers || []);
   const [q, setQ] = useState("");
   const [error, setError] = useState("");
 
@@ -33,7 +36,7 @@ export default function AllUsers() {
   const [adding, setAdding] = useState(false);
   const [createdUserInfo, setCreatedUserInfo] = useState(null); // stores { username, password }
   const [showAddUserPass, setShowAddUserPass] = useState(false);
-  const [tools, setTools] = useState([]);
+  const [tools, setTools] = useState(cachedUsersTools || []);
 
   const getWhatsAppTemplate = (username, password) => {
     const today = new Date();
@@ -85,12 +88,13 @@ ${password}
   }, [users, q]);
 
   const load = async () => {
-    setLoading(true);
+    if (!cachedUsers) setLoading(true);
     setError("");
     try {
       const res = await getAllUsers();
       const list = res.data?.users ?? res.data ?? [];
-      setUsers(Array.isArray(list) ? list : []);
+      cachedUsers = Array.isArray(list) ? list : [];
+      setUsers(cachedUsers);
     } catch (e) {
       setError(e?.response?.data?.message || "Failed to load users");
     } finally {
@@ -102,6 +106,7 @@ ${password}
     try {
       const res = await getAllTools();
       const list = res.data?.tools ?? res.data ?? [];
+      cachedUsersTools = list;
       setTools(list);
     } catch (err) {
       console.error("Failed to load tools:", err);
@@ -241,6 +246,28 @@ ${password}
       Toast.fire({ icon: "success", title: `@${username}'s account has been locked` });
     } catch (err) {
       Toast.fire({ icon: "error", title: err.response?.data?.message || "Failed to lock account" });
+    }
+  };
+
+  const handleClearSession = async (id, username) => {
+    const result = await Swal.fire({
+      title: `Clear Session for @${username}?`,
+      text: "This will log them out of all devices instantly so they can log in again.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Clear Session",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#3b82f6",
+      cancelButtonColor: "#64748b",
+      reverseButtons: true,
+      borderRadius: "16px",
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await clearSession(id);
+      Toast.fire({ icon: "success", title: `Session cleared for @${username}` });
+    } catch (err) {
+      Toast.fire({ icon: "error", title: err.response?.data?.message || "Failed to clear session" });
     }
   };
 
@@ -420,6 +447,15 @@ ${password}
                             className="h-8 px-3 rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 font-semibold text-xs transition active:scale-95 cursor-pointer"
                           >
                             Logs
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleClearSession(id, username);
+                            }}
+                            className="h-8 px-3 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 font-semibold text-xs transition active:scale-95 cursor-pointer"
+                          >
+                            Clear Session
                           </button>
                           {u.isLocked ? (
                             <button

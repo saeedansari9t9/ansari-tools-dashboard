@@ -3,13 +3,16 @@ import { useSearchParams } from "react-router-dom";
 import { getUserLogs, getAllUsers } from "../utils/api";
 import { History, Search, User, Globe, Copy, Check, X } from "lucide-react";
 
+let cachedLogsUsers = null;
+let cachedLogsAll = null;
+
 export default function LoginLogs() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialUserId = searchParams.get("userId") || "";
 
-  const [loading, setLoading] = useState(true);
-  const [logs, setLogs] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(initialUserId ? true : !cachedLogsAll);
+  const [logs, setLogs] = useState(initialUserId ? [] : (cachedLogsAll || []));
+  const [users, setUsers] = useState(cachedLogsUsers || []);
   const [selectedUser, setSelectedUser] = useState(initialUserId);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
@@ -27,7 +30,8 @@ export default function LoginLogs() {
       try {
         const res = await getAllUsers();
         const list = res.data?.users ?? res.data ?? [];
-        setUsers(Array.isArray(list) ? list : []);
+        cachedLogsUsers = Array.isArray(list) ? list : [];
+        setUsers(cachedLogsUsers);
       } catch (err) {
         console.error("Failed to load users for filter dropdown:", err);
       }
@@ -36,7 +40,7 @@ export default function LoginLogs() {
 
   // Fetch logs based on active selected user filter
   const fetchLogs = async () => {
-    setLoading(true);
+    if (!cachedLogsAll || selectedUser) setLoading(true);
     setError("");
     try {
       const params = {};
@@ -44,7 +48,9 @@ export default function LoginLogs() {
         params.userId = selectedUser;
       }
       const res = await getUserLogs(params);
-      setLogs(res.data?.logs || []);
+      const fetchedLogs = res.data?.logs || [];
+      if (!selectedUser) cachedLogsAll = fetchedLogs;
+      setLogs(fetchedLogs);
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to load logs");
     } finally {

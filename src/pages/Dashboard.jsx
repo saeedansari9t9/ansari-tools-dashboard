@@ -7,14 +7,19 @@ import { toast } from "react-hot-toast";
 
 const capitalize = (str) => str ? str.replace(/\b\w/g, c => c.toUpperCase()) : "";
 
+let cachedMe = null;
+let cachedTools = null;
+let cachedAdminUsers = null;
+let cachedIsAdmin = null;
+
 export default function Dashboard({ role }) {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
-  const [me, setMe] = useState(null);
-  const [tools, setTools] = useState([]);
-  const [adminUsers, setAdminUsers] = useState([]);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [me, setMe] = useState(cachedMe);
+  const [tools, setTools] = useState(cachedTools || []);
+  const [adminUsers, setAdminUsers] = useState(cachedAdminUsers || []);
+  const [isAdmin, setIsAdmin] = useState(cachedIsAdmin || false);
+  const [loading, setLoading] = useState(!cachedMe);
   const [isExtensionInstalled, setIsExtensionInstalled] = useState(false);
 
   useEffect(() => {
@@ -51,19 +56,24 @@ export default function Dashboard({ role }) {
 
   useEffect(() => {
     (async () => {
+      if (!cachedMe) setLoading(true);
       try {
         const u = await getMe();
-        setMe(u.data);
+        cachedMe = u.data;
+        setMe(cachedMe);
 
         const userRole = role || u.data.role;
-        setIsAdmin(userRole === "admin");
+        cachedIsAdmin = (userRole === "admin");
+        setIsAdmin(cachedIsAdmin);
 
         if (userRole === "admin") {
           const res = await getUsersWithTools();
-          setAdminUsers(res.data.users || []);
+          cachedAdminUsers = res.data.users || [];
+          setAdminUsers(cachedAdminUsers);
         } else {
           const t = await getMyTools();
-          setTools(t.data.tools || []);
+          cachedTools = t.data.tools || [];
+          setTools(cachedTools);
         }
       } catch (err) {
         console.error("Failed to load dashboard data:", err);

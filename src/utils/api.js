@@ -83,6 +83,7 @@ export const resetUserPassword = (id, data) => API.post(`/user/${id}/reset-passw
 export const getUserLogs = (params) => API.get("/user/logs", { params });
 export const unlockUser = (id) => API.post(`/user/${id}/unlock`);
 export const lockUser = (id, reason) => API.post(`/user/${id}/lock`, { reason });
+export const clearSession = (id) => API.post(`/user/${id}/clear-session`);
 
 // TOOLS
 export const getAllTools = (params) => API.get("/admin/tools", { params }); // ✅ adjust if needed

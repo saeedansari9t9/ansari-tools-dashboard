@@ -26,16 +26,19 @@ function ToolIcon({ tool, isSelected }) {
   );
 }
 
+let cachedTools = null;
+let cachedExtensionUrl = null;
+
 export default function ManageCookies() {
-  const [loading, setLoading] = useState(true);
-  const [tools, setTools] = useState([]);
+  const [loading, setLoading] = useState(!cachedTools);
+  const [tools, setTools] = useState(cachedTools || []);
   const [selectedToolId, setSelectedToolId] = useState("");
   const [cookiesText, setCookiesText] = useState("");
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Extension url states
-  const [extensionFileUrl, setExtensionFileUrl] = useState("");
+  const [extensionFileUrl, setExtensionFileUrl] = useState(cachedExtensionUrl || "");
   const [savingLink, setSavingLink] = useState(false);
 
   // Extension upload states
@@ -44,23 +47,19 @@ export default function ManageCookies() {
 
   // Load all tools and current extension URL on mount
   const loadTools = async () => {
-    setLoading(true);
+    if (!cachedTools) setLoading(true);
     try {
       const res = await getAllTools();
       const list = res.data?.tools ?? res.data ?? [];
+      cachedTools = list;
       setTools(list);
-      
-      // Auto-select the first tool if available
-      if (list.length > 0) {
-        setSelectedToolId(list[0]._id || list[0].id);
-        setCookiesText(list[0].cookies || "");
-      }
 
       // Fetch extension direct link
       const tutRes = await getTutorial();
       const t = tutRes.data?.tutorial;
       if (t) {
-        setExtensionFileUrl(t.extensionFileUrl || "");
+        cachedExtensionUrl = t.extensionFileUrl || "";
+        setExtensionFileUrl(cachedExtensionUrl);
       }
     } catch (e) {
       toast.error(e?.response?.data?.message || "Failed to load tools");
@@ -70,6 +69,10 @@ export default function ManageCookies() {
   };
 
   useEffect(() => {
+    if (cachedTools && cachedTools.length > 0) {
+      setSelectedToolId(cachedTools[0]._id || cachedTools[0].id);
+      setCookiesText(cachedTools[0].cookies || "");
+    }
     loadTools();
   }, []);
 
@@ -220,7 +223,7 @@ export default function ManageCookies() {
                 </div>
 
                 {/* Tool Cards Selection Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 max-h-36 overflow-y-auto p-1 bg-slate-50/50 border border-slate-100 rounded-2xl">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 max-h-52 overflow-y-auto p-1 bg-slate-50/50 border border-slate-100 rounded-2xl">
                   {filteredTools.length > 0 ? (
                     filteredTools.map((t) => {
                       const id = t._id || t.id;
@@ -236,11 +239,11 @@ export default function ManageCookies() {
                               : "border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50/30"
                           }`}
                         >
-                          <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
                             {/* Tool Icon / Logo */}
                             <ToolIcon tool={t} isSelected={isSelected} />
-                            <div className="min-w-0">
-                              <div className="font-semibold text-slate-800 text-xs truncate leading-tight">{t.name}</div>
+                            <div className="min-w-0 flex-1">
+                              <div className="font-semibold text-slate-800 text-xs sm:text-sm leading-tight">{t.name}</div>
                             </div>
                           </div>
                           
