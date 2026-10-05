@@ -1,26 +1,41 @@
 import { Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { adminMe } from "../utils/api"; // ensure export exists
+import { adminMe, getMe } from "../utils/api";
 
 export default function ProtectedRoute({ children }) {
   const [status, setStatus] = useState("loading"); 
   // "loading" | "admin" | "user" | "none"
 
   useEffect(() => {
-    // 1) Try admin cookie first
+    const token = localStorage.getItem("token");
+    const savedRole = localStorage.getItem("role") || "user";
+
+    // 1) If user has a token in localStorage, verify via getMe()
+    if (token) {
+      getMe()
+        .then((res) => {
+          const userRole = res.data?.role || savedRole;
+          setStatus(userRole);
+        })
+        .catch(() => {
+          localStorage.removeItem("token");
+          localStorage.removeItem("role");
+          setStatus("none");
+        });
+      return;
+    }
+
+    // 2) Fallback: check for website admin SSO cookie
     adminMe()
       .then((res) => {
         if (res.data?.ok) {
           setStatus("admin");
         } else {
-          // 2) fallback to user token
-          const token = localStorage.getItem("token");
-          setStatus(token ? "user" : "none");
+          setStatus("none");
         }
       })
       .catch(() => {
-        const token = localStorage.getItem("token");
-        setStatus(token ? "user" : "none");
+        setStatus("none");
       });
   }, []);
 

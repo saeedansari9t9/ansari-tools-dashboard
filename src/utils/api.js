@@ -41,6 +41,11 @@ API.interceptors.response.use(
 
       // Session expired or invalidated
       if (status === 401) {
+        // Do not kick out dashboard user if admin cookie probe fails
+        if (error.config?.url?.includes("/admins/me")) {
+          return Promise.reject(error);
+        }
+
         localStorage.removeItem("token");
         localStorage.removeItem("role");
         if (!window.location.pathname.startsWith("/login")) {
