@@ -18,6 +18,7 @@ import Tutorials from "./pages/Tutorials";
 import Profile from "./pages/Profile";
 import ToolDetails from "./pages/ToolDetails";
 import PlanInfo from "./pages/PlanInfo";
+import WhatsAppBadge from "./components/WhatsAppBadge";
 
 export default function App() {
   return (
@@ -180,6 +181,9 @@ export default function App() {
         {/* FALLBACK */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+
+      {/* Floating WhatsApp badge across all dashboard pages */}
+      <WhatsAppBadge />
     </BrowserRouter>
     </>
   );
