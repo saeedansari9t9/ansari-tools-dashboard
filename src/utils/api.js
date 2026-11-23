@@ -34,10 +34,18 @@ API.interceptors.request.use((config) => {
 // ✅ Handle 401 Unauthorized globally (e.g. session expired on password reset)
 API.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response) {
       const status = error.response.status;
       const code = error.response.data?.code;
+      const config = error.config;
+
+      // Auto-retry 503 (Database connection not ready) up to 2 times
+      if (status === 503 && config && (!config.__retryCount || config.__retryCount < 2)) {
+        config.__retryCount = (config.__retryCount || 0) + 1;
+        await new Promise((resolve) => setTimeout(resolve, 800 * config.__retryCount));
+        return API(config);
+      }
 
       // Session expired or invalidated
       if (status === 401) {
